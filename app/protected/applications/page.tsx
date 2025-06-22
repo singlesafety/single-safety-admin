@@ -164,10 +164,6 @@ export default function ApplicationsPage() {
               className="pl-10 w-64"
             />
           </div>
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            새 신청서
-          </Button>
         </div>
       </div>
 
@@ -296,14 +292,6 @@ export default function ApplicationsPage() {
                                     상세보기
                                   </>
                                 )}
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleView(application)}
-                              >
-                                <Eye className="mr-1 h-3 w-3" />
-                                보기
                               </Button>
                               <Button 
                                 variant="outline" 
