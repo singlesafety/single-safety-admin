@@ -21,7 +21,7 @@ const navigation = [
   },
   {
     name: "신청 관리",
-    href: "/protected/reports",
+    href: "/protected/applications",
     icon: FileCheck,
   },
   {
@@ -31,7 +31,7 @@ const navigation = [
   },
   {
     name: "제품 관리",
-    href: "/protected/users",
+    href: "/protected/products",
     icon: Package,
   },
   {
