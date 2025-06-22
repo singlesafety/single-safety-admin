@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Bell, Shield, Users, Database } from "lucide-react";
@@ -19,25 +18,17 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Security Settings
+              Application Settings
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
-              <Input id="session-timeout" defaultValue="30" type="number" />
+            <div className="flex items-center space-x-2">
+              <Checkbox id="require-auth" />
+              <Label htmlFor="require-auth">본인인증 활성화</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Checkbox id="require-2fa" defaultChecked />
-              <Label htmlFor="require-2fa">Require two-factor authentication</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="password-complexity" defaultChecked />
-              <Label htmlFor="password-complexity">Enforce strong password requirements</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox id="login-alerts" defaultChecked />
-              <Label htmlFor="login-alerts">Send email alerts for failed login attempts</Label>
+              <Checkbox id="password-complexity" />
+              <Label htmlFor="password-complexity">지역별 세이프 존 뷰어 활성화</Label>
             </div>
           </CardContent>
         </Card>

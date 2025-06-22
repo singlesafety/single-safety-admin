@@ -122,7 +122,19 @@ export default function ApplicationsPage() {
 
     // 신청자 타입 필터링
     if (filterValues.applicantType) {
-      filtered = filtered.filter(app => app.applicant_type === filterValues.applicantType);
+      filtered = filtered.filter(app => {
+        const appType = app.applicant_type;
+        // DB에서 'tenent'로 저장된 경우도 'tenant'로 처리
+        const normalizedAppType = appType === 'tenent' ? 'tenant' : appType;
+        const matches = normalizedAppType === filterValues.applicantType;
+        
+        // 디버깅용 로그 (개발 중에만 사용)
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`App: ${app.building_name}, Type: "${appType}" -> "${normalizedAppType}", Filter: "${filterValues.applicantType}", Matches: ${matches}`);
+        }
+        
+        return matches;
+      });
     }
 
     // 금액 필터링
