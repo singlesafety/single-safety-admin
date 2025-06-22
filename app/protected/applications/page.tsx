@@ -18,7 +18,10 @@ import {
   Package,
   DollarSign,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Filter,
+  X,
+  CalendarDays
 } from "lucide-react";
 import { ApplicationWithProducts, ApplicationStats } from "@/lib/types/application";
 import { getApplications, deleteApplication, searchApplications, getApplicationStats } from "@/lib/supabase/applications";
@@ -38,6 +41,17 @@ export default function ApplicationsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationWithProducts | null>(null);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('view');
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    dateFrom: "",
+    dateTo: "",
+    applicantType: "",
+    minAmount: "",
+    maxAmount: "",
+    installationDateFrom: "",
+    installationDateTo: ""
+  });
+  const [allApplications, setAllApplications] = useState<ApplicationWithProducts[]>([]);
 
   useEffect(() => {
     loadApplications();
@@ -48,6 +62,7 @@ export default function ApplicationsPage() {
     try {
       setLoading(true);
       const data = await getApplications();
+      setAllApplications(data);
       setApplications(data);
     } catch (error) {
       console.error('Failed to load applications:', error);
@@ -67,17 +82,83 @@ export default function ApplicationsPage() {
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      try {
-        const results = await searchApplications(query);
-        setApplications(results);
-      } catch (error) {
-        console.error('Failed to search applications:', error);
-      }
-    } else {
-      loadApplications();
-    }
+    applyFilters(query, filters);
   };
+
+  const applyFilters = (searchQuery: string, filterValues: typeof filters) => {
+    let filtered = [...allApplications];
+
+    // 검색어 필터링
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(app => 
+        app.building_name.toLowerCase().includes(query) ||
+        app.contact.toLowerCase().includes(query) ||
+        app.address.toLowerCase().includes(query)
+      );
+    }
+
+    // 신청일 필터링
+    if (filterValues.dateFrom) {
+      const fromDate = new Date(filterValues.dateFrom);
+      filtered = filtered.filter(app => new Date(app.created_at) >= fromDate);
+    }
+    if (filterValues.dateTo) {
+      const toDate = new Date(filterValues.dateTo);
+      toDate.setHours(23, 59, 59, 999); // 해당 날짜 끝까지
+      filtered = filtered.filter(app => new Date(app.created_at) <= toDate);
+    }
+
+    // 설치일 필터링
+    if (filterValues.installationDateFrom) {
+      const fromDate = new Date(filterValues.installationDateFrom);
+      filtered = filtered.filter(app => new Date(app.installation_date) >= fromDate);
+    }
+    if (filterValues.installationDateTo) {
+      const toDate = new Date(filterValues.installationDateTo);
+      toDate.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(app => new Date(app.installation_date) <= toDate);
+    }
+
+    // 신청자 타입 필터링
+    if (filterValues.applicantType) {
+      filtered = filtered.filter(app => app.applicant_type === filterValues.applicantType);
+    }
+
+    // 금액 필터링
+    if (filterValues.minAmount) {
+      const minAmount = parseInt(filterValues.minAmount);
+      filtered = filtered.filter(app => (app.total_amount || 0) >= minAmount);
+    }
+    if (filterValues.maxAmount) {
+      const maxAmount = parseInt(filterValues.maxAmount);
+      filtered = filtered.filter(app => (app.total_amount || 0) <= maxAmount);
+    }
+
+    setApplications(filtered);
+  };
+
+  const handleFilterChange = (field: keyof typeof filters, value: string) => {
+    const newFilters = { ...filters, [field]: value };
+    setFilters(newFilters);
+    applyFilters(searchQuery, newFilters);
+  };
+
+  const clearFilters = () => {
+    const clearedFilters = {
+      dateFrom: "",
+      dateTo: "",
+      applicantType: "",
+      minAmount: "",
+      maxAmount: "",
+      installationDateFrom: "",
+      installationDateTo: ""
+    };
+    setFilters(clearedFilters);
+    applyFilters(searchQuery, clearedFilters);
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => value !== "");
 
   const handleDelete = async (id: number) => {
     if (confirm('정말로 이 신청서를 삭제하시겠습니까?')) {
@@ -164,10 +245,27 @@ export default function ApplicationsPage() {
               className="pl-10 w-64"
             />
           </div>
+          <Button
+            variant={showFilters ? "default" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="relative"
+          >
+            <Filter className="mr-2 h-4 w-4" />
+            필터
+            {hasActiveFilters && (
+              <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full" />
+            )}
+          </Button>
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <X className="mr-1 h-3 w-3" />
+              초기화
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">전체 신청</CardTitle>
@@ -190,16 +288,6 @@ export default function ApplicationsPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">처리 대기</CardTitle>
-            <Package className="h-4 w-4 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending_applications}</div>
-            <p className="text-xs text-muted-foreground">처리 대기 중</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">총 매출</CardTitle>
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -209,6 +297,119 @@ export default function ApplicationsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {showFilters && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              필터 설정
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 신청일 범위 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <CalendarDays className="h-3 w-3" />
+                  신청일 시작
+                </label>
+                <Input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">신청일 종료</label>
+                <Input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+                />
+              </div>
+
+              {/* 설치일 범위 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-3 w-3" />
+                  설치일 시작
+                </label>
+                <Input
+                  type="date"
+                  value={filters.installationDateFrom}
+                  onChange={(e) => handleFilterChange("installationDateFrom", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">설치일 종료</label>
+                <Input
+                  type="date"
+                  value={filters.installationDateTo}
+                  onChange={(e) => handleFilterChange("installationDateTo", e.target.value)}
+                />
+              </div>
+
+              {/* 신청자 타입 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">신청자 구분</label>
+                <select
+                  value={filters.applicantType}
+                  onChange={(e) => handleFilterChange("applicantType", e.target.value)}
+                  className="w-full p-2 border rounded-md text-sm"
+                >
+                  <option value="">전체</option>
+                  <option value="tenant">임차인</option>
+                  <option value="owner">건물주</option>
+                </select>
+              </div>
+
+              {/* 금액 범위 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-3 w-3" />
+                  최소 금액
+                </label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={filters.minAmount}
+                  onChange={(e) => handleFilterChange("minAmount", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">최대 금액</label>
+                <Input
+                  type="number"
+                  placeholder="1000000"
+                  value={filters.maxAmount}
+                  onChange={(e) => handleFilterChange("maxAmount", e.target.value)}
+                />
+              </div>
+
+              {/* 빈 공간과 액션 버튼 */}
+              <div className="flex items-end">
+                <Button variant="outline" onClick={clearFilters} className="w-full">
+                  <X className="mr-2 h-3 w-3" />
+                  모든 필터 초기화
+                </Button>
+              </div>
+            </div>
+
+            {/* 필터 결과 표시 */}
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>
+                  전체 {allApplications.length}개 중 {applications.length}개 표시
+                </span>
+                {hasActiveFilters && (
+                  <span className="text-blue-600">필터 적용됨</span>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
