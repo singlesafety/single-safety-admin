@@ -20,7 +20,7 @@ export default async function ProtectedLayout({
       <DashboardSidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <DashboardHeader user={data.user} />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 ml-64">
           {children}
         </main>
       </div>

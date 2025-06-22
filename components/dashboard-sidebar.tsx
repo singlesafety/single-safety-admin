@@ -6,41 +6,36 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Shield,
-  Users,
-  FileText,
+  Package,
+  FileCheck,
   Settings,
   Activity,
-  AlertTriangle,
+  MapPin,
 } from "lucide-react";
 
 const navigation = [
   {
-    name: "Overview",
+    name: "개요",
     href: "/protected",
     icon: LayoutDashboard,
   },
   {
-    name: "Safety Reports",
+    name: "신청 관리",
     href: "/protected/reports",
-    icon: FileText,
+    icon: FileCheck,
   },
   {
-    name: "Incidents",
+    name: "세이프 존 관리",
     href: "/protected/incidents",
-    icon: AlertTriangle,
+    icon: MapPin,
   },
   {
-    name: "Users",
+    name: "제품 관리",
     href: "/protected/users",
-    icon: Users,
+    icon: Package,
   },
   {
-    name: "Monitoring",
-    href: "/protected/monitoring",
-    icon: Activity,
-  },
-  {
-    name: "Settings",
+    name: "설정",
     href: "/protected/settings",
     icon: Settings,
   },
