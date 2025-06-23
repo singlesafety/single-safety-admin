@@ -19,7 +19,8 @@ import {
   Calendar,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from "lucide-react";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, MapPosition } from "@/lib/types/safezone";
 import { createSafeZone, updateSafeZone } from "@/lib/supabase/safezones";
@@ -46,10 +47,11 @@ export function SafeZoneDialog({
     address: "",
     lat: "",
     lng: "",
-    level: "",
+    level: "1",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [canEditLatLng, setCanEditLatLng] = useState(false);
 
   useEffect(() => {
     if (safeZone && mode !== 'create') {
@@ -263,6 +265,26 @@ export function SafeZoneDialog({
               )}
             </div>
 
+            {/* 좌표 수정 설정 */}
+            {mode !== 'view' && (
+              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <Label htmlFor="can-edit-latlng" className="text-sm font-medium">위도/경도 직접 수정</Label>
+                    <p className="text-xs text-muted-foreground">주소 검색 대신 위도/경도를 직접 입력할 수 있습니다</p>
+                  </div>
+                </div>
+                <input
+                  id="can-edit-latlng"
+                  type="checkbox"
+                  checked={canEditLatLng}
+                  onChange={(e) => setCanEditLatLng(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </div>
+            )}
+
             {/* 좌표 정보 */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -279,11 +301,15 @@ export function SafeZoneDialog({
                     value={formData.lat}
                     onChange={handleChange("lat")}
                     placeholder="위도"
-                    className={errors.lat ? "border-red-500" : ""}
+                    disabled={!canEditLatLng}
+                    className={`${errors.lat ? "border-red-500" : ""} ${!canEditLatLng ? "bg-muted" : ""}`}
                   />
                 )}
                 {errors.lat && (
                   <p className="text-sm text-red-500">{errors.lat}</p>
+                )}
+                {mode !== 'view' && !canEditLatLng && (
+                  <p className="text-xs text-muted-foreground">주소 검색을 통해 자동으로 설정됩니다</p>
                 )}
               </div>
 
@@ -301,18 +327,22 @@ export function SafeZoneDialog({
                     value={formData.lng}
                     onChange={handleChange("lng")}
                     placeholder="경도"
-                    className={errors.lng ? "border-red-500" : ""}
+                    disabled={!canEditLatLng}
+                    className={`${errors.lng ? "border-red-500" : ""} ${!canEditLatLng ? "bg-muted" : ""}`}
                   />
                 )}
                 {errors.lng && (
                   <p className="text-sm text-red-500">{errors.lng}</p>
+                )}
+                {mode !== 'view' && !canEditLatLng && (
+                  <p className="text-xs text-muted-foreground">주소 검색을 통해 자동으로 설정됩니다</p>
                 )}
               </div>
             </div>
 
             {/* 레벨 정보 */}
             <div className="space-y-2">
-              <Label htmlFor="level">레벨</Label>
+              <Label htmlFor="level">레벨 *</Label>
               {mode === 'view' ? (
                 <div className="p-2 bg-muted rounded text-sm">
                   {safeZone?.level || '레벨 정보 없음'}

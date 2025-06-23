@@ -31,6 +31,7 @@ export function AddressSearch({
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
   const sessionToken = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Google Maps API 로드 확인
   useEffect(() => {
@@ -63,6 +64,15 @@ export function AddressSearch({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
   }, []);
 
   const searchAddresses = async (searchQuery: string) => {
@@ -124,15 +134,20 @@ export function AddressSearch({
     const value = e.target.value;
     setQuery(value);
     
+    // 이전 타이머 클리어
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
     if (value.length > 2) {
-      const debounceTimer = setTimeout(() => {
+      setIsLoading(true);
+      debounceTimer.current = setTimeout(() => {
         searchAddresses(value);
       }, 300);
-      
-      return () => clearTimeout(debounceTimer);
     } else {
       setResults([]);
       setShowResults(false);
+      setIsLoading(false);
     }
   };
 
@@ -172,16 +187,17 @@ export function AddressSearch({
             className="pl-10"
             disabled={!isGoogleLoaded}
           />
-          {isLoading && (
-            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-          )}
         </div>
         <Button 
           onClick={handleSearch}
           variant="outline"
           disabled={!query.trim() || !isGoogleLoaded || isLoading}
         >
-          <Search className="h-4 w-4" />
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
