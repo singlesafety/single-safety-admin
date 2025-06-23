@@ -20,21 +20,20 @@ export async function getApplications(): Promise<ApplicationWithProducts[]> {
       )
     `)
     .order('created_at', { ascending: false });
-
   if (error) {
     throw new Error(`Failed to fetch applications: ${error.message}`);
   }
 
   // Calculate totals for each application
   const applicationsWithTotals = (data || []).map(app => {
-    const total_amount = app.application_products?.reduce((sum, ap) => {
+    const total_amount = app.application_products?.reduce((sum: number, ap: any) => {
       if (ap.products && ap.quantity) {
         return sum + (ap.products.price * ap.quantity);
       }
       return sum;
     }, 0) || 0;
 
-    const total_quantity = app.application_products?.reduce((sum, ap) => {
+    const total_quantity = app.application_products?.reduce((sum: number, ap: any) => {
       return sum + (ap.quantity || 0);
     }, 0) || 0;
 
@@ -71,14 +70,14 @@ export async function getApplication(id: number): Promise<ApplicationWithProduct
   }
 
   // Calculate totals
-  const total_amount = data.application_products?.reduce((sum, ap) => {
+  const total_amount = data.application_products?.reduce((sum: number, ap: any) => {
     if (ap.products && ap.quantity) {
       return sum + (ap.products.price * ap.quantity);
     }
     return sum;
   }, 0) || 0;
 
-  const total_quantity = data.application_products?.reduce((sum, ap) => {
+  const total_quantity = data.application_products?.reduce((sum: number, ap: any) => {
     return sum + (ap.quantity || 0);
   }, 0) || 0;
 
@@ -229,14 +228,14 @@ export async function searchApplications(query: string): Promise<ApplicationWith
 
   // Calculate totals for each application
   const applicationsWithTotals = (data || []).map(app => {
-    const total_amount = app.application_products?.reduce((sum, ap) => {
+    const total_amount = app.application_products?.reduce((sum: number, ap: any) => {
       if (ap.products && ap.quantity) {
         return sum + (ap.products.price * ap.quantity);
       }
       return sum;
     }, 0) || 0;
 
-    const total_quantity = app.application_products?.reduce((sum, ap) => {
+    const total_quantity = app.application_products?.reduce((sum: number, ap: any) => {
       return sum + (ap.quantity || 0);
     }, 0) || 0;
 
@@ -291,8 +290,8 @@ export async function getApplicationStats(): Promise<ApplicationStats> {
   }
 
   // Calculate total revenue
-  const totalRevenue = (applicationsData || []).reduce((sum, app) => {
-    const appRevenue = app.application_products?.reduce((appSum, ap) => {
+  const totalRevenue = (applicationsData || []).reduce((sum: number, app: any) => {
+    const appRevenue = app.application_products?.reduce((appSum: number, ap: any) => {
       if (ap.products && ap.quantity) {
         return appSum + (ap.products.price * ap.quantity);
       }

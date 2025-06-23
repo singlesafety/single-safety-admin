@@ -1,3 +1,5 @@
+import { Product } from "./product";
+
 export interface Application {
   id: number;
   building_name: string;
@@ -19,13 +21,7 @@ export interface ApplicationProduct {
 
 export interface ApplicationWithProducts extends Application {
   application_products: (ApplicationProduct & {
-    products: {
-      id: string;
-      name: string;
-      price: number;
-      price_description: string | null;
-      image_path: string;
-    } | null;
+    products: Product | null;
   })[];
   total_amount?: number;
   total_quantity?: number;
