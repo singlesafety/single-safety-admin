@@ -178,8 +178,6 @@ export default function ApplicationsPage() {
     }
   };
 
-
-
   const toggleExpanded = (applicationId: number) => {
     const newExpanded = new Set(expandedApplications);
     if (newExpanded.has(applicationId)) {
@@ -454,9 +452,21 @@ export default function ApplicationsPage() {
                               <span className="text-sm text-muted-foreground">
                                 제품 {application.total_quantity}개
                               </span>
-                              <span className="text-lg font-bold text-green-600">
-                                ₩{application.total_amount?.toLocaleString()}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                {application.has_discount && (
+                                  <>
+                                    <span className="text-sm text-muted-foreground line-through">
+                                      ₩{application.original_amount?.toLocaleString()}
+                                    </span>
+                                    <Badge variant="destructive" className="text-xs">
+                                      할인 적용됨
+                                    </Badge>
+                                  </>
+                                )}
+                                <span className="text-lg font-bold text-green-600">
+                                  ₩{application.total_amount?.toLocaleString()}
+                                </span>
+                              </div>
                             </div>
                             
                             <div className="flex items-center gap-2">
@@ -492,27 +502,51 @@ export default function ApplicationsPage() {
                             <div className="mt-4 pt-4 border-t">
                               <h4 className="font-medium mb-3">신청 제품 목록</h4>
                               <div className="space-y-2">
-                                {application.application_products.map((ap) => (
-                                  <div key={ap.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                      <Package className="h-4 w-4 text-muted-foreground" />
-                                      <div>
-                                        <p className="font-medium">{ap.products?.name || '알 수 없는 제품'}</p>
+                                {application.application_products.map((ap) => {
+                                  const isOwner = application.applicant_type === 'owner';
+                                  const isSinglePackage = ap.product_id === 'single_package';
+                                  const hasProductDiscount = isOwner && isSinglePackage && application.has_discount;
+                                  const originalPrice = ap.products ? ap.products.price * (ap.quantity || 0) : 0;
+                                  const discountedPrice = hasProductDiscount ? originalPrice * 0.7 : originalPrice;
+                                  
+                                  return (
+                                    <div key={ap.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                                      <div className="flex items-center gap-3">
+                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                        <div>
+                                          <p className="font-medium flex items-center gap-2">
+                                            {ap.products?.name || '알 수 없는 제품'}
+                                            {hasProductDiscount && (
+                                              <Badge variant="destructive" className="text-xs">30% 할인</Badge>
+                                            )}
+                                          </p>
+                                          <p className="text-sm text-muted-foreground">
+                                            수량: {ap.quantity}개
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        {hasProductDiscount ? (
+                                          <div className="space-y-1">
+                                            <p className="text-sm text-muted-foreground line-through">
+                                              ₩{originalPrice.toLocaleString()}
+                                            </p>
+                                            <p className="font-medium">
+                                              ₩{discountedPrice.toLocaleString()}
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          <p className="font-medium">
+                                            ₩{originalPrice.toLocaleString()}
+                                          </p>
+                                        )}
                                         <p className="text-sm text-muted-foreground">
-                                          수량: {ap.quantity}개
+                                          단가: ₩{ap.products?.price.toLocaleString() || '0'}
                                         </p>
                                       </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="font-medium">
-                                        ₩{ap.products ? (ap.products.price * (ap.quantity || 0)).toLocaleString() : '0'}
-                                      </p>
-                                      <p className="text-sm text-muted-foreground">
-                                        단가: ₩{ap.products?.price.toLocaleString() || '0'}
-                                      </p>
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           )}

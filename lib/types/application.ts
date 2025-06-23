@@ -25,6 +25,9 @@ export interface ApplicationWithProducts extends Application {
   })[];
   total_amount?: number;
   total_quantity?: number;
+  original_amount?: number;
+  discount_amount?: number;
+  has_discount?: boolean;
 }
 
 export interface CreateApplicationData {
