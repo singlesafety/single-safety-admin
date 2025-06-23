@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { geocodeAddress } from '@/lib/sgis';
+import { getAdminArea } from '@/lib/sgis';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await geocodeAddress(address);
+    const result = await getAdminArea(address);
 
     if (!result) {
       return NextResponse.json(

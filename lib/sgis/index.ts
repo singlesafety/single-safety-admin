@@ -1,6 +1,6 @@
 export { sgisClient, sgisTokenManager } from './client';
 export { checkSGISTokenStatus, refreshSGISTokenIfNeeded } from './utils';
-export { geocodeAddress, reverseGeocode, searchAddressWithDetails } from './geocoding';
+export { getAdminArea, reverseGeocode, searchAdminAreas } from './geocoding';
 export type { 
   SGISAuthRequest, 
   SGISAuthResponse, 
@@ -9,5 +9,6 @@ export type {
   SGISGeocodeRequest,
   SGISGeocodeResponse,
   SGISGeocodeResultData,
-  GeocodeResult
+  GeocodeResult,
+  AdminAreaResult
 } from '@/lib/types/sgis';

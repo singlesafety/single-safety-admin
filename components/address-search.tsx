@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Search, Loader2 } from "lucide-react";
 import { MapPosition } from "@/lib/types/safezone";
+import { Loader } from "@googlemaps/js-api-loader";
 
 interface AddressSearchProps {
   onLocationSelect: (position: MapPosition, address: string, buildingName?: string) => void;
@@ -33,25 +34,34 @@ export function AddressSearch({
   const resultsRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
-  // Google Maps API 로드 확인
+  // Google Maps API 로드 확인 및 자동 로드
   useEffect(() => {
-    const checkGoogleMaps = async () => {
-      if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-        try {
-          const { AutocompleteSessionToken } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
-          sessionToken.current = new AutocompleteSessionToken();
-          setIsGoogleLoaded(true);
-        } catch (error) {
-          console.error('Error loading Google Maps Places library:', error);
-          setTimeout(checkGoogleMaps, 1000);
-        }
-      } else {
-        // Google Maps가 로드되지 않았으면 1초 후 다시 확인
-        setTimeout(checkGoogleMaps, 1000);
+    const initGoogleMaps = async () => {
+      try {
+        // Google Maps가 로드되지 않았으면 직접 로드
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+        const loader = new Loader({
+          apiKey: apiKey || "",
+          version: "weekly",
+          libraries: ["maps", "marker", "places"]
+        });
+
+        await loader.load();
+        
+        // 로드 완료 후 PlacesLibrary 초기화
+        const { AutocompleteSessionToken } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+        sessionToken.current = new AutocompleteSessionToken();
+        setIsGoogleLoaded(true);
+        
+      } catch (error) {
+        console.error('Google Maps 로드 실패:', error);
+        // 실패 시 재시도
+        setTimeout(initGoogleMaps, 2000);
       }
     };
 
-    checkGoogleMaps();
+    initGoogleMaps();
   }, []);
 
   // 외부 클릭 시 결과 숨김

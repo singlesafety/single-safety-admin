@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, MapPosition } from "@/lib/types/safezone";
 import { createSafeZoneWithGeocoding, updateSafeZoneWithGeocoding } from "@/lib/supabase/safezones";
-import { geocodeAddressClient } from "@/lib/api/sgis-client";
+import { getAdminAreaClient } from "@/lib/api/sgis-client";
 import { AddressSearch } from "@/components/address-search";
 
 interface SafeZoneDialogProps {
@@ -181,13 +181,13 @@ export function SafeZoneDialog({
     
     // SGIS API로 행정구역 정보 자동 채우기
     try {
-      const geocodeResult = await geocodeAddressClient(address);
-      if (geocodeResult) {
+      const adminAreaResult = await getAdminAreaClient(address);
+      if (adminAreaResult) {
         setFormData(prev => ({
           ...prev,
-          sido_nm: geocodeResult.sido_nm,
-          sgg_nm: geocodeResult.sgg_nm,
-          adm_nm: geocodeResult.adm_nm
+          sido_nm: adminAreaResult.sido_nm,
+          sgg_nm: adminAreaResult.sgg_nm,
+          adm_nm: adminAreaResult.adm_nm
         }));
       }
     } catch (error) {
@@ -233,32 +233,87 @@ export function SafeZoneDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[600px] lg:max-w-[700px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[800px] xl:max-w-[1000px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
           <DialogDescription>{getDescription()}</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="mt-4 space-y-6">
-          {/* 주소 검색 (전체 너비) */}
+          {/* 주소 검색 및 입력 */}
           {mode !== 'view' && (
             <div className="p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
               <div className="flex items-center gap-2 mb-3">
                 <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                <Label htmlFor="address-search" className="text-base font-semibold text-blue-900 dark:text-blue-100">주소 검색</Label>
+                <Label htmlFor="address-search" className="text-base font-semibold text-blue-900 dark:text-blue-100">주소 정보</Label>
               </div>
-              <AddressSearch
-                onLocationSelect={handleAddressSelect}
-                placeholder="주소를 검색하여 건물명과 위치를 자동으로 입력하세요..."
-              />
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                주소를 검색하면 건물명과 좌표가 자동으로 입력됩니다
-              </p>
+              
+              <div>
+                <AddressSearch
+                  onLocationSelect={handleAddressSelect}
+                  placeholder="주소를 검색하여 건물명과 위치를 자동으로 입력하세요..."
+                />
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                  주소를 검색하면 건물명과 좌표가 자동으로 입력됩니다
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address">기본 주소</Label>
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={handleChange("address")}
+                    placeholder="주소가 자동으로 입력됩니다"
+                    className="bg-blue-50 dark:bg-blue-950/30 dark:text-blue-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="detail_address">상세주소</Label>
+                  <Input
+                    id="detail_address"
+                    value={formData.detail_address}
+                    onChange={handleChange("detail_address")}
+                    placeholder="동, 호수, 층수 등"
+                  />
+                </div>
+              </div>
             </div>
           )}
 
-          {/* 메인 콘텐츠 - 2열 레이아웃 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* 좌측 열: 기본 정보 */}
+          {/* 주소 정보 (보기 모드) */}
+          {mode === 'view' && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <h3 className="text-base font-semibold text-blue-900 dark:text-blue-100">주소 정보</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 기본 주소 */}
+                <div className="space-y-2">
+                  <Label>기본 주소</Label>
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-sm dark:text-gray-200">{safeZone?.address || '주소 없음'}</span>
+                  </div>
+                </div>
+                
+                {/* 상세주소 */}
+                <div className="space-y-2">
+                  <Label>상세주소</Label>
+                  <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-sm dark:text-gray-200">{safeZone?.detail_address || '상세주소 없음'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 메인 콘텐츠 - 3열 레이아웃 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {/* 첫 번째 열: 기본 정보 */}
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-2 mb-4">
@@ -331,82 +386,24 @@ export function SafeZoneDialog({
               </div>
             </div>
 
-            {/* 우측 열: 위치 정보 */}
+            {/* 두 번째 열: 좌표 정보 */}
             <div className="space-y-4">
               <div className="p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-2 mb-4">
                   <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <h3 className="text-base font-semibold text-green-900 dark:text-green-100">위치 정보</h3>
+                  <h3 className="text-base font-semibold text-green-900 dark:text-green-100">좌표 정보</h3>
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="address">기본 주소</Label>
-                    {mode === 'view' ? (
-                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm dark:text-gray-200">{safeZone?.address || '주소 없음'}</span>
-                      </div>
-                    ) : (
-                      <Input
-                        id="address"
-                        value={formData.address}
-                        onChange={handleChange("address")}
-                        placeholder="주소가 자동으로 입력됩니다"
-                        className="bg-green-50 dark:bg-green-950/30 dark:text-green-100"
-                      />
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="detail_address">상세주소</Label>
-                    {mode === 'view' ? (
-                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                        <span className="text-sm dark:text-gray-200">{safeZone?.detail_address || '상세주소 없음'}</span>
-                      </div>
-                    ) : (
-                      <Input
-                        id="detail_address"
-                        value={formData.detail_address}
-                        onChange={handleChange("detail_address")}
-                        placeholder="동, 호수, 층수 등"
-                      />
-                    )}
-                  </div>
-
-                  {/* 행정구역 정보 */}
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/50 rounded border border-blue-200 dark:border-blue-800">
-                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">행정구역 정보</h4>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div>
-                        <span className="text-blue-700 dark:text-blue-300">시도:</span>
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          {mode === 'view' ? (safeZone?.sido_nm || '-') : (formData.sido_nm || '자동입력')}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-blue-700 dark:text-blue-300">시군구:</span>
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          {mode === 'view' ? (safeZone?.sgg_nm || '-') : (formData.sgg_nm || '자동입력')}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-blue-700 dark:text-blue-300">행정동:</span>
-                        <div className="font-medium text-blue-900 dark:text-blue-100">
-                          {mode === 'view' ? (safeZone?.adm_nm || '-') : (formData.adm_nm || '자동입력')}
-                        </div>
-                      </div>
-                    </div>
-                    {mode !== 'view' && (
-                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                        주소 검색 시 자동으로 입력됩니다
+                  {mode !== 'view' && (
+                    <div className="p-3 bg-green-100 dark:bg-green-900/50 rounded border border-green-300 dark:border-green-700 mb-4">
+                      <p className="text-xs text-green-700 dark:text-green-300">
+                        주소 검색 시 GPS 좌표가 자동으로 입력됩니다
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* 좌표 정보 */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="lat">위도</Label>
                       {mode === 'view' ? (
@@ -460,20 +457,66 @@ export function SafeZoneDialog({
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* 등록일 (보기 모드일 때만) */}
-          {mode === 'view' && safeZone && (
-            <div className="p-4 bg-amber-50 dark:bg-amber-950/50 rounded-lg border border-amber-200 dark:border-amber-800">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">등록 정보</h3>
-              </div>
-              <div className="text-sm text-amber-800 dark:text-amber-200">
-                등록일: {formatDate(safeZone.created_at)}
+            {/* 세 번째 열: 행정구역 정보 */}
+            <div className="space-y-4">
+              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/50 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <h3 className="text-base font-semibold text-indigo-900 dark:text-indigo-100">행정구역</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  {mode === 'view' ? (
+                    <>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">시도</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {safeZone?.sido_nm || '-'}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">시군구</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {safeZone?.sgg_nm || '-'}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">행정동</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {safeZone?.adm_nm || '-'}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">시도</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {formData.sido_nm || '자동입력'}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">시군구</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {formData.sgg_nm || '자동입력'}
+                        </div>
+                      </div>
+                      <div className="p-3 bg-white dark:bg-indigo-900/30 rounded border border-indigo-300 dark:border-indigo-700">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-300 mb-1">행정동</div>
+                        <div className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                          {formData.adm_nm || '자동입력'}
+                        </div>
+                      </div>
+                      <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">
+                        주소 검색 시 자동으로 입력됩니다
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
-          )}
+          </div>
 
           {errors.general && (
             <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg">

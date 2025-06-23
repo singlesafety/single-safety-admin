@@ -70,3 +70,11 @@ export interface GeocodeResult {
   formatted_address: string;
   addr_type: string;
 }
+
+export interface AdminAreaResult {
+  sido_nm: string;
+  sgg_nm: string;
+  adm_nm: string;
+  formatted_address: string;
+  addr_type: string;
+}

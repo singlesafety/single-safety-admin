@@ -1,6 +1,6 @@
 import { createClient } from "./client";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, SafeZoneStats } from "@/lib/types/safezone";
-import { geocodeAddress } from "@/lib/sgis";
+import { getAdminArea } from "@/lib/sgis";
 
 export async function getSafeZones(): Promise<SafeZone[]> {
   const supabase = createClient();
@@ -176,17 +176,17 @@ export async function createSafeZoneWithGeocoding(safeZoneData: CreateSafeZoneDa
   
   if (safeZoneData.address && !safeZoneData.sido_nm) {
     try {
-      const geocodeResult = await geocodeAddress(safeZoneData.address);
-      if (geocodeResult) {
+      const adminAreaResult = await getAdminArea(safeZoneData.address);
+      if (adminAreaResult) {
         enhancedData = {
           ...enhancedData,
-          sido_nm: geocodeResult.sido_nm,
-          sgg_nm: geocodeResult.sgg_nm,
-          adm_nm: geocodeResult.adm_nm,
+          sido_nm: adminAreaResult.sido_nm,
+          sgg_nm: adminAreaResult.sgg_nm,
+          adm_nm: adminAreaResult.adm_nm,
         };
       }
     } catch (error) {
-      console.warn('Failed to geocode address, proceeding without administrative info:', error);
+      console.warn('Failed to get admin area, proceeding without administrative info:', error);
     }
   }
 
@@ -212,17 +212,17 @@ export async function updateSafeZoneWithGeocoding(safeZoneData: UpdateSafeZoneDa
   
   if (updateData.address) {
     try {
-      const geocodeResult = await geocodeAddress(updateData.address);
-      if (geocodeResult) {
+      const adminAreaResult = await getAdminArea(updateData.address);
+      if (adminAreaResult) {
         enhancedData = {
           ...enhancedData,
-          sido_nm: geocodeResult.sido_nm,
-          sgg_nm: geocodeResult.sgg_nm,
-          adm_nm: geocodeResult.adm_nm,
+          sido_nm: adminAreaResult.sido_nm,
+          sgg_nm: adminAreaResult.sgg_nm,
+          adm_nm: adminAreaResult.adm_nm,
         };
       }
     } catch (error) {
-      console.warn('Failed to geocode address, proceeding with existing data:', error);
+      console.warn('Failed to get admin area, proceeding with existing data:', error);
     }
   }
   

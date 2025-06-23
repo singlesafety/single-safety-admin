@@ -1,6 +1,6 @@
-import { GeocodeResult } from '@/lib/types/sgis';
+import { AdminAreaResult } from '@/lib/types/sgis';
 
-export async function geocodeAddressClient(address: string): Promise<GeocodeResult | null> {
+export async function getAdminAreaClient(address: string): Promise<AdminAreaResult | null> {
   try {
     const url = new URL('/api/sgis/geocode', window.location.origin);
     url.searchParams.set('address', address);
