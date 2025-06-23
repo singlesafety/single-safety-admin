@@ -39,7 +39,7 @@ export default function SafeZonesPage() {
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('list');
   const [selectedSafeZone, setSelectedSafeZone] = useState<SafeZone | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('view');
@@ -173,22 +173,22 @@ export default function SafeZonesPage() {
           </div>
           <div className="flex border rounded-lg">
             <Button
-              variant={viewMode === 'map' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('map')}
-              className="rounded-r-none"
-            >
-              <Map className="mr-2 h-4 w-4" />
-              지도
-            </Button>
-            <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('list')}
-              className="rounded-l-none"
+              className="rounded-r-none"
             >
               <List className="mr-2 h-4 w-4" />
               목록
+            </Button>
+            <Button
+              variant={viewMode === 'map' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('map')}
+              className="rounded-l-none"
+            >
+              <Map className="mr-2 h-4 w-4" />
+              지도
             </Button>
           </div>
           <Button onClick={handleAdd}>
