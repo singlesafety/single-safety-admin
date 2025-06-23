@@ -150,9 +150,10 @@ export function SafeZoneDialog({
     }
   };
 
-  const handleAddressSelect = (position: MapPosition, address: string) => {
+  const handleAddressSelect = (position: MapPosition, address: string, buildingName?: string) => {
     setFormData(prev => ({
       ...prev,
+      building_name: buildingName || prev.building_name, // 건물명이 있으면 자동 입력
       address: address,
       lat: position.lat.toString(),
       lng: position.lng.toString()
@@ -160,6 +161,7 @@ export function SafeZoneDialog({
     // 주소 관련 에러 클리어
     setErrors(prev => ({
       ...prev,
+      building_name: "",
       address: "",
       lat: "",
       lng: ""
@@ -202,6 +204,20 @@ export function SafeZoneDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 주소 검색 (최상단) */}
+          {mode !== 'view' && (
+            <div className="space-y-2">
+              <Label htmlFor="address-search">주소 검색</Label>
+              <AddressSearch
+                onLocationSelect={handleAddressSelect}
+                placeholder="주소를 검색하여 건물명과 위치를 자동으로 입력하세요..."
+              />
+              <p className="text-xs text-muted-foreground">
+                주소를 검색하면 건물명과 좌표가 자동으로 입력됩니다
+              </p>
+            </div>
+          )}
+
           {/* 기본 정보 */}
           <div className="space-y-4">
             <div className="space-y-2">
@@ -250,18 +266,13 @@ export function SafeZoneDialog({
                   {safeZone?.address || '주소 없음'}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <AddressSearch
-                    onLocationSelect={handleAddressSelect}
-                    placeholder="주소를 검색하세요..."
-                  />
-                  <Input
-                    id="address"
-                    value={formData.address}
-                    onChange={handleChange("address")}
-                    placeholder="또는 직접 입력하세요 (선택사항)"
-                  />
-                </div>
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={handleChange("address")}
+                  placeholder="주소가 자동으로 입력됩니다 (또는 직접 입력)"
+                  className="bg-muted/50"
+                />
               )}
             </div>
 

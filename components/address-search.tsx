@@ -7,7 +7,7 @@ import { MapPin, Search, Loader2 } from "lucide-react";
 import { MapPosition } from "@/lib/types/safezone";
 
 interface AddressSearchProps {
-  onLocationSelect: (position: MapPosition, address: string) => void;
+  onLocationSelect: (position: MapPosition, address: string, buildingName?: string) => void;
   placeholder?: string;
   className?: string;
 }
@@ -154,7 +154,7 @@ export function AddressSearch({
   const handleResultClick = async (result: SearchResult) => {
     setQuery(result.address);
     setShowResults(false);
-    onLocationSelect(result.position, result.address);
+    onLocationSelect(result.position, result.address, result.name);
     
     // Create new session token for next search
     if (isGoogleLoaded) {
