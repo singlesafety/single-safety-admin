@@ -199,7 +199,7 @@ export default function SafeZonesPage() {
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">전체 세이프 존</CardTitle>
@@ -218,16 +218,6 @@ export default function SafeZonesPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.recent_additions}</div>
             <p className="text-xs text-muted-foreground">지난 30일</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">커버리지 지역</CardTitle>
-            <MapPin className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.coverage_areas}</div>
-            <p className="text-xs text-muted-foreground">서비스 지역</p>
           </CardContent>
         </Card>
       </div>
