@@ -1,0 +1,43 @@
+export interface SafeZone {
+  id: number;
+  created_at: string;
+  building_name: string | null;
+  contact: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+export interface CreateSafeZoneData {
+  building_name: string;
+  contact?: string;
+  address?: string;
+  lat: number;
+  lng: number;
+}
+
+export interface UpdateSafeZoneData extends Partial<CreateSafeZoneData> {
+  id: number;
+}
+
+export interface SafeZoneStats {
+  total_safezones: number;
+  recent_additions: number;
+  coverage_areas: number;
+}
+
+export interface MapPosition {
+  lat: number;
+  lng: number;
+}
+
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
+export interface MarkerData extends SafeZone {
+  position: MapPosition;
+}

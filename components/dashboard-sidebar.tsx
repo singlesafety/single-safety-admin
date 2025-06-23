@@ -26,7 +26,7 @@ const navigation = [
   },
   {
     name: "세이프 존 관리",
-    href: "/protected/incidents",
+    href: "/protected/safezone",
     icon: MapPin,
   },
   {
