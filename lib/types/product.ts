@@ -16,3 +16,9 @@ export interface CreateProductData {
 export interface UpdateProductData extends Partial<CreateProductData> {
   id: string;
 }
+
+export interface ProductStats {
+  total_products: number;
+  average_price: number;
+  recent_additions: number;
+}

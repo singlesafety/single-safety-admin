@@ -1,5 +1,5 @@
 import { createClient } from "./client";
-import { Product, CreateProductData, UpdateProductData } from "@/lib/types/product";
+import { Product, CreateProductData, UpdateProductData, ProductStats } from "@/lib/types/product";
 
 export async function getProducts(): Promise<Product[]> {
   const supabase = createClient();
@@ -94,4 +94,40 @@ export async function searchProducts(query: string): Promise<Product[]> {
   }
 
   return data || [];
+}
+
+export async function getProductStats(): Promise<ProductStats> {
+  const supabase = createClient();
+  
+  // Get total products count
+  const { count: totalCount, error: totalError } = await supabase
+    .from('products')
+    .select('*', { count: 'exact', head: true });
+
+  if (totalError) {
+    throw new Error(`Failed to get total products: ${totalError.message}`);
+  }
+
+  // Get all products for price calculation
+  const { data: productsData, error: productsError } = await supabase
+    .from('products')
+    .select('price');
+
+  if (productsError) {
+    throw new Error(`Failed to get products data: ${productsError.message}`);
+  }
+
+  // Calculate average price
+  const averagePrice = productsData && productsData.length > 0 
+    ? productsData.reduce((sum: number, product: any) => sum + product.price, 0) / productsData.length
+    : 0;
+
+  // Get recent additions (last 30 days) - Note: products table doesn't have created_at, so we'll return 0
+  const recentAdditions = 0;
+
+  return {
+    total_products: totalCount || 0,
+    average_price: Math.round(averagePrice),
+    recent_additions: recentAdditions
+  };
 }
