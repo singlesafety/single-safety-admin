@@ -122,12 +122,17 @@ export default function SafeZonesPage() {
       setNewMarkerPosition(null);
       setSelectedSafeZone(null);
     } else {
-      // 추가 모드 진입
-      setSelectedSafeZone(null);
-      setDialogMode('create');
-      setNewMarkerPosition(null);
+      // 추가 모드 시작
       setAddMode(true);
-      setViewMode('map');
+      
+      // 초기화
+      setSelectedSafeZone(null);
+      setNewMarkerPosition(null);
+
+      if (viewMode === 'list') {
+        setDialogMode('create');
+        setIsDialogOpen(true);
+      }
     }
   };
 
@@ -138,7 +143,6 @@ export default function SafeZonesPage() {
       setNewMarkerPosition(position);
       setDialogMode('create');
       setIsDialogOpen(true);
-      setAddMode(false);
     }
   };
 

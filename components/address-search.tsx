@@ -13,6 +13,7 @@ interface AddressSearchProps {
 }
 
 interface SearchResult {
+  name: string;
   address: string;
   position: MapPosition;
   placeId: string;
@@ -28,19 +29,21 @@ export function AddressSearch({
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
-  const placesService = useRef<google.maps.places.PlacesService | null>(null);
-  const geocoder = useRef<google.maps.Geocoder | null>(null);
+  const sessionToken = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // Google Maps API 로드 확인
   useEffect(() => {
-    const checkGoogleMaps = () => {
+    const checkGoogleMaps = async () => {
       if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-        // Create a temporary div for PlacesService initialization
-        const tempDiv = document.createElement('div');
-        placesService.current = new google.maps.places.PlacesService(tempDiv);
-        geocoder.current = new google.maps.Geocoder();
-        setIsGoogleLoaded(true);
+        try {
+          const { AutocompleteSessionToken } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+          sessionToken.current = new AutocompleteSessionToken();
+          setIsGoogleLoaded(true);
+        } catch (error) {
+          console.error('Error loading Google Maps Places library:', error);
+          setTimeout(checkGoogleMaps, 1000);
+        }
       } else {
         // Google Maps가 로드되지 않았으면 1초 후 다시 확인
         setTimeout(checkGoogleMaps, 1000);
@@ -63,78 +66,59 @@ export function AddressSearch({
   }, []);
 
   const searchAddresses = async (searchQuery: string) => {
-    if (!searchQuery.trim() || !isGoogleLoaded || !placesService.current) return;
+    if (!searchQuery.trim() || !isGoogleLoaded || !sessionToken.current) return;
 
     setIsLoading(true);
     try {
-      const request: google.maps.places.FindPlaceFromQueryRequest = {
-        query: searchQuery,
-        fields: ['place_id', 'formatted_address', 'geometry', 'name'],
+      const { AutocompleteSuggestion } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+      
+      const request: google.maps.places.AutocompleteRequest = {
+        input: searchQuery,
+        sessionToken: sessionToken.current,
         locationBias: {
           // Bias towards South Korea
           center: { lat: 37.5665, lng: 126.9780 }, // Seoul coordinates
-          radius: 100000 // 100km radius
-        }
+          radius: 50000 // 100km radius
+        },
+        region: 'kr', // 한국으로 제한
+        language: 'ko' // 한국어 결과
       };
 
-      placesService.current.findPlaceFromQuery(
-        request,
-        async (results, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-            const searchResults: SearchResult[] = [];
-            
-            // Convert place results to search results
-            for (const place of results.slice(0, 5)) { // 최대 5개 결과
-              if (place.place_id && place.geometry?.location && place.formatted_address) {
-                searchResults.push({
-                  address: place.formatted_address,
-                  position: {
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng()
-                  },
-                  placeId: place.place_id
-                });
-              }
-            }
-            
-            setResults(searchResults);
-            setShowResults(searchResults.length > 0);
-          } else {
-            setResults([]);
-            setShowResults(false);
+      const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+      const searchResults: SearchResult[] = [];
+      
+      for (const suggestion of suggestions.slice(0, 5)) { // 최대 5개 결과
+        const placePrediction = suggestion.placePrediction;
+        if (placePrediction) {
+          // Convert PlacePrediction to Place to get coordinates
+          const place = placePrediction.toPlace();
+          await place.fetchFields({ fields: ['location', 'formattedAddress', 'displayName'] });
+          
+          if (place.location && place.formattedAddress) {
+            searchResults.push({
+              name: place.displayName || '',
+              address: place.formattedAddress,
+              position: {
+                lat: place.location.lat(),
+                lng: place.location.lng()
+              },
+              placeId: place.id || ''
+            });
           }
-          setIsLoading(false);
         }
-      );
+      }
+      
+      setResults(searchResults);
+      setShowResults(searchResults.length > 0);
     } catch (error) {
       console.error('Address search error:', error);
+      setResults([]);
+      setShowResults(false);
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const getCoordinatesFromPlaceId = (placeId: string): Promise<MapPosition | null> => {
-    return new Promise((resolve) => {
-      if (!geocoder.current) {
-        resolve(null);
-        return;
-      }
-
-      geocoder.current.geocode(
-        { placeId: placeId },
-        (results, status) => {
-          if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
-            const location = results[0].geometry.location;
-            resolve({
-              lat: location.lat(),
-              lng: location.lng()
-            });
-          } else {
-            resolve(null);
-          }
-        }
-      );
-    });
-  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -152,10 +136,20 @@ export function AddressSearch({
     }
   };
 
-  const handleResultClick = (result: SearchResult) => {
+  const handleResultClick = async (result: SearchResult) => {
     setQuery(result.address);
     setShowResults(false);
     onLocationSelect(result.position, result.address);
+    
+    // Create new session token for next search
+    if (isGoogleLoaded) {
+      try {
+        const { AutocompleteSessionToken } = await google.maps.importLibrary("places") as google.maps.PlacesLibrary;
+        sessionToken.current = new AutocompleteSessionToken();
+      } catch (error) {
+        console.error('Error creating new session token:', error);
+      }
+    }
   };
 
   const handleSearch = () => {
@@ -164,12 +158,6 @@ export function AddressSearch({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSearch();
-    }
-  };
 
   return (
     <div className={`relative ${className}`} ref={resultsRef}>
@@ -179,7 +167,7 @@ export function AddressSearch({
           <Input
             value={query}
             onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearch())}
             placeholder={placeholder}
             className="pl-10"
             disabled={!isGoogleLoaded}
@@ -208,7 +196,7 @@ export function AddressSearch({
             >
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <span className="text-sm">{result.address}</span>
+                <span className="text-sm">{`${result.address} (${result.name})`}</span>
               </div>
             </button>
           ))}
