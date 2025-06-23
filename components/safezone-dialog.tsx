@@ -45,6 +45,7 @@ export function SafeZoneDialog({
     address: "",
     lat: "",
     lng: "",
+    level: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -57,6 +58,7 @@ export function SafeZoneDialog({
         address: safeZone.address || "",
         lat: safeZone.lat?.toString() || "",
         lng: safeZone.lng?.toString() || "",
+        level: safeZone.level?.toString() || "",
       });
     } else if (mode === 'create') {
       setFormData({
@@ -65,6 +67,7 @@ export function SafeZoneDialog({
         address: "",
         lat: initialPosition?.lat.toString() || "",
         lng: initialPosition?.lng.toString() || "",
+        level: "",
       });
     }
     setErrors({});
@@ -112,6 +115,7 @@ export function SafeZoneDialog({
         address: formData.address.trim() || undefined,
         lat: parseFloat(formData.lat),
         lng: parseFloat(formData.lng),
+        level: formData.level.trim() ? parseInt(formData.level.trim()) : undefined,
       };
 
       if (mode === 'edit' && safeZone) {
@@ -281,6 +285,26 @@ export function SafeZoneDialog({
                   <p className="text-sm text-red-500">{errors.lng}</p>
                 )}
               </div>
+            </div>
+
+            {/* 레벨 정보 */}
+            <div className="space-y-2">
+              <Label htmlFor="level">레벨</Label>
+              {mode === 'view' ? (
+                <div className="p-2 bg-muted rounded text-sm">
+                  {safeZone?.level || '레벨 정보 없음'}
+                </div>
+              ) : (
+                <Input
+                  id="level"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={formData.level}
+                  onChange={handleChange("level")}
+                  placeholder="레벨을 입력하세요 (선택사항)"
+                />
+              )}
             </div>
 
             {/* 등록일 (보기 모드일 때만) */}

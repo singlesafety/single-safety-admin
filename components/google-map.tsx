@@ -137,6 +137,7 @@ export function GoogleMap({
           </h3>
           ${safeZone.address ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">📍 ${safeZone.address}</p>` : ''}
           ${safeZone.contact ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">📞 ${safeZone.contact}</p>` : ''}
+          ${safeZone.level ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">⭐ 레벨: ${safeZone.level}</p>` : ''}
           <p style="margin: 4px 0; color: #999; font-size: 12px;">
             좌표: ${safeZone.lat.toFixed(6)}, ${safeZone.lng.toFixed(6)}
           </p>

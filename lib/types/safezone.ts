@@ -6,6 +6,7 @@ export interface SafeZone {
   address: string | null;
   lat: number | null;
   lng: number | null;
+  level: number | null;
 }
 
 export interface CreateSafeZoneData {
@@ -14,6 +15,7 @@ export interface CreateSafeZoneData {
   address?: string;
   lat: number;
   lng: number;
+  level?: number;
 }
 
 export interface UpdateSafeZoneData extends Partial<CreateSafeZoneData> {

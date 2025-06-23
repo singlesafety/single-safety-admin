@@ -297,6 +297,11 @@ export default function SafeZonesPage() {
                                 좌표: {safeZone.lat.toFixed(6)}, {safeZone.lng.toFixed(6)}
                               </div>
                             )}
+                            {safeZone.level && (
+                              <div className="text-xs">
+                                레벨: {safeZone.level}
+                              </div>
+                            )}
                             <div className="text-xs">
                               등록일: {formatDate(safeZone.created_at)}
                             </div>
