@@ -9,7 +9,6 @@ import {
   Package,
   FileCheck,
   Settings,
-  Activity,
   MapPin,
 } from "lucide-react";
 

@@ -65,7 +65,7 @@ export async function createSetting(settingData: CreateSettingData): Promise<Set
 export async function updateSetting(settingName: string, settingValue: string, description?: string): Promise<Setting> {
   const supabase = createClient();
   
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     setting_value: settingValue,
     updated_at: new Date().toISOString()
   };
@@ -89,7 +89,6 @@ export async function updateSetting(settingName: string, settingValue: string, d
 }
 
 export async function upsertSetting(settingData: UpdateSettingData): Promise<Setting> {
-  const supabase = createClient();
   
   // 먼저 설정이 존재하는지 확인
   const existingSetting = await getSetting(settingData.setting_name);

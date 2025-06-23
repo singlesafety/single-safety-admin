@@ -96,7 +96,7 @@ export function GoogleMap({
     });
 
     setMap(newMap);
-  }, [isLoaded, center, zoom, onMapClick, showAddMode]);
+  }, [isLoaded, center, zoom, onMapClick, showAddMode, map]);
 
   // 마커 생성/업데이트
   const createMarker = useCallback((safeZone: SafeZone) => {
@@ -176,7 +176,8 @@ export function GoogleMap({
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      markersRef.current.forEach(marker => marker.setMap(null));
+      const markers = markersRef.current;
+      markers.forEach(marker => marker.setMap(null));
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
       }

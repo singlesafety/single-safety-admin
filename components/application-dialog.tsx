@@ -104,7 +104,8 @@ export function ApplicationDialog({ open, onClose, application, mode }: Applicat
   const updateProductQuantity = (productId: string, quantity: number) => {
     setSelectedProducts(prev => {
       if (quantity <= 0) {
-        const { [productId]: _, ...rest } = prev;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { [productId]: _unused, ...rest } = prev;
         return rest;
       }
       return { ...prev, [productId]: quantity };

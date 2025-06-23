@@ -7,9 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { 
   FileCheck, 
-  Plus, 
   Search, 
-  Eye, 
   Trash2, 
   Building, 
   Phone, 
@@ -24,8 +22,7 @@ import {
   CalendarDays
 } from "lucide-react";
 import { ApplicationWithProducts, ApplicationStats } from "@/lib/types/application";
-import { getApplications, deleteApplication, searchApplications, getApplicationStats } from "@/lib/supabase/applications";
-import { ApplicationDialog } from "@/components/application-dialog";
+import { getApplications, deleteApplication, getApplicationStats } from "@/lib/supabase/applications";
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationWithProducts[]>([]);
@@ -38,9 +35,6 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedApplications, setExpandedApplications] = useState<Set<number>>(new Set());
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedApplication, setSelectedApplication] = useState<ApplicationWithProducts | null>(null);
-  const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('view');
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     dateFrom: "",
@@ -184,30 +178,7 @@ export default function ApplicationsPage() {
     }
   };
 
-  const handleView = (application: ApplicationWithProducts) => {
-    setSelectedApplication(application);
-    setDialogMode('view');
-    setIsDialogOpen(true);
-  };
 
-  const handleEdit = (application: ApplicationWithProducts) => {
-    setSelectedApplication(application);
-    setDialogMode('edit');
-    setIsDialogOpen(true);
-  };
-
-  const handleAdd = () => {
-    setSelectedApplication(null);
-    setDialogMode('create');
-    setIsDialogOpen(true);
-  };
-
-  const handleDialogClose = () => {
-    setIsDialogOpen(false);
-    setSelectedApplication(null);
-    loadApplications();
-    loadStats();
-  };
 
   const toggleExpanded = (applicationId: number) => {
     const newExpanded = new Set(expandedApplications);
@@ -556,12 +527,6 @@ export default function ApplicationsPage() {
         </CardContent>
       </Card>
 
-      <ApplicationDialog 
-        open={isDialogOpen}
-        onClose={handleDialogClose}
-        application={selectedApplication}
-        mode={dialogMode}
-      />
     </div>
   );
 }

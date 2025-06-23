@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { SafeZone, MapPosition } from "@/lib/types/safezone";
-import { MapPin, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface SimpleMapProps {
   safeZones: SafeZone[];
