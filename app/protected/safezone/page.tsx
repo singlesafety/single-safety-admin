@@ -26,7 +26,7 @@ import {
   searchSafeZones, 
   getSafeZoneStats 
 } from "@/lib/supabase/safezones";
-import { SimpleMap } from "@/components/simple-map";
+import { GoogleMap } from "@/components/google-map";
 import { SafeZoneDialog } from "@/components/safezone-dialog";
 
 export default function SafeZonesPage() {
@@ -244,7 +244,7 @@ export default function SafeZonesPage() {
             )}
           </CardHeader>
           <CardContent>
-            <SimpleMap
+            <GoogleMap
               safeZones={safeZones}
               onMarkerClick={handleMarkerClick}
               onMapClick={handleMapClick}
