@@ -28,7 +28,7 @@ export function AddressSearch({
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
-  const autocompleteService = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesService = useRef<google.maps.places.PlacesService | null>(null);
   const geocoder = useRef<google.maps.Geocoder | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +36,9 @@ export function AddressSearch({
   useEffect(() => {
     const checkGoogleMaps = () => {
       if (typeof google !== 'undefined' && google.maps && google.maps.places) {
-        autocompleteService.current = new google.maps.places.AutocompleteService();
+        // Create a temporary div for PlacesService initialization
+        const tempDiv = document.createElement('div');
+        placesService.current = new google.maps.places.PlacesService(tempDiv);
         geocoder.current = new google.maps.Geocoder();
         setIsGoogleLoaded(true);
       } else {
@@ -61,40 +63,42 @@ export function AddressSearch({
   }, []);
 
   const searchAddresses = async (searchQuery: string) => {
-    if (!searchQuery.trim() || !isGoogleLoaded || !autocompleteService.current) return;
+    if (!searchQuery.trim() || !isGoogleLoaded || !placesService.current) return;
 
     setIsLoading(true);
     try {
-      const request = {
-        input: searchQuery,
-        componentRestrictions: { country: 'kr' }, // 한국으로 제한
-        types: ['establishment', 'geocode'] // 장소와 주소
+      const request: google.maps.places.FindPlaceFromQueryRequest = {
+        query: searchQuery,
+        fields: ['place_id', 'formatted_address', 'geometry', 'name'],
+        locationBias: {
+          // Bias towards South Korea
+          center: { lat: 37.5665, lng: 126.9780 }, // Seoul coordinates
+          radius: 100000 // 100km radius
+        }
       };
 
-      autocompleteService.current.getPlacePredictions(
+      placesService.current.findPlaceFromQuery(
         request,
-        async (predictions, status) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+        async (results, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results) {
             const searchResults: SearchResult[] = [];
             
-            // 각 예측 결과에 대해 좌표 가져오기
-            for (const prediction of predictions.slice(0, 5)) { // 최대 5개 결과
-              try {
-                const result = await getCoordinatesFromPlaceId(prediction.place_id!);
-                if (result) {
-                  searchResults.push({
-                    address: prediction.description,
-                    position: result,
-                    placeId: prediction.place_id!
-                  });
-                }
-              } catch (error) {
-                console.error('Error getting coordinates:', error);
+            // Convert place results to search results
+            for (const place of results.slice(0, 5)) { // 최대 5개 결과
+              if (place.place_id && place.geometry?.location && place.formatted_address) {
+                searchResults.push({
+                  address: place.formatted_address,
+                  position: {
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng()
+                  },
+                  placeId: place.place_id
+                });
               }
             }
             
             setResults(searchResults);
-            setShowResults(true);
+            setShowResults(searchResults.length > 0);
           } else {
             setResults([]);
             setShowResults(false);

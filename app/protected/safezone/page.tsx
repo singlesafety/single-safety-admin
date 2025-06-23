@@ -16,7 +16,9 @@ import {
   Phone, 
   Shield,
   Calendar,
-  X
+  X,
+  List,
+  Map
 } from "lucide-react";
 import { SafeZone, SafeZoneStats, MapPosition } from "@/lib/types/safezone";
 import { 
@@ -130,6 +132,8 @@ export default function SafeZonesPage() {
   };
 
   const handleMapClick = (position: MapPosition) => {
+    console.log("Map clicked at position:", position);
+    
     if (addMode) {
       setNewMarkerPosition(position);
       setDialogMode('create');
@@ -178,7 +182,7 @@ export default function SafeZonesPage() {
               className="pl-10 w-64"
             />
           </div>
-          {/* <div className="flex border rounded-lg">
+          <div className="flex border rounded-lg">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
@@ -197,7 +201,7 @@ export default function SafeZonesPage() {
               <Map className="mr-2 h-4 w-4" />
               지도
             </Button>
-          </div> */}
+          </div>
           <Button 
             onClick={handleAdd}
             variant={addMode ? "destructive" : "default"}

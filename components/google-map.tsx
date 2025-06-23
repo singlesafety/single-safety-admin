@@ -86,10 +86,7 @@ export function GoogleMap({
 
     // 맵 클릭 이벤트
     newMap.addListener("click", (event: google.maps.MapMouseEvent) => {
-      if (!selectedSafeZone && infoWindowRef.current) {
-        infoWindowRef.current.close();
-      }
-      if (onMapClick && showAddMode && event.latLng) {
+      if (onMapClick && event.latLng) {
         const position = {
           lat: event.latLng.lat(),
           lng: event.latLng.lng()
@@ -97,7 +94,6 @@ export function GoogleMap({
         onMapClick(position);
       }
     });
-
     setMap(newMap);
   }, [isLoaded, center, zoom, onMapClick, showAddMode, map]);
 
