@@ -8,6 +8,9 @@ export interface SafeZone {
   lat: number | null;
   lng: number | null;
   level: number | null;
+  sido_nm: string | null;
+  sgg_nm: string | null;
+  adm_nm: string | null;
 }
 
 export interface CreateSafeZoneData {
@@ -18,6 +21,9 @@ export interface CreateSafeZoneData {
   lat: number;
   lng: number;
   level?: number;
+  sido_nm?: string;
+  sgg_nm?: string;
+  adm_nm?: string;
 }
 
 export interface UpdateSafeZoneData extends Partial<CreateSafeZoneData> {

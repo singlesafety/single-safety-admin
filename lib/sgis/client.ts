@@ -22,18 +22,16 @@ class SGISTokenManager {
       throw new Error('SGIS credentials not found in environment variables');
     }
 
-    const requestBody: SGISAuthRequest = {
-      consumer_key: consumerKey,
-      consumer_secret: consumerSecret,
-    };
-
     try {
-      const response = await fetch('https://sgisapi.kostat.go.kr/OpenAPI3/auth/authentication.json', {
-        method: 'POST',
+      const url = new URL('https://sgisapi.kostat.go.kr/OpenAPI3/auth/authentication.json');
+      url.searchParams.set('consumer_key', consumerKey);
+      url.searchParams.set('consumer_secret', consumerSecret);
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -110,12 +108,18 @@ export class SGISClient {
 
   async makeAuthenticatedRequest<T>(
     endpoint: string,
+    params: Record<string, string> = {},
     options: RequestInit = {}
   ): Promise<T> {
     const accessToken = await this.tokenManager.getAccessToken();
     
     const url = new URL(endpoint);
     url.searchParams.set('accessToken', accessToken);
+    
+    // 추가 파라미터 설정
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
 
     const response = await fetch(url.toString(), {
       ...options,
@@ -131,8 +135,13 @@ export class SGISClient {
         await this.tokenManager.refreshToken();
         const newAccessToken = await this.tokenManager.getAccessToken();
         
-        url.searchParams.set('accessToken', newAccessToken);
-        const retryResponse = await fetch(url.toString(), {
+        const retryUrl = new URL(endpoint);
+        retryUrl.searchParams.set('accessToken', newAccessToken);
+        Object.entries(params).forEach(([key, value]) => {
+          retryUrl.searchParams.set(key, value);
+        });
+        
+        const retryResponse = await fetch(retryUrl.toString(), {
           ...options,
           headers: {
             'Content-Type': 'application/json',

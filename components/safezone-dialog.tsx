@@ -20,10 +20,10 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  Settings
 } from "lucide-react";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, MapPosition } from "@/lib/types/safezone";
-import { createSafeZone, updateSafeZone } from "@/lib/supabase/safezones";
+import { createSafeZoneWithGeocoding, updateSafeZoneWithGeocoding } from "@/lib/supabase/safezones";
+import { geocodeAddressClient } from "@/lib/api/sgis-client";
 import { AddressSearch } from "@/components/address-search";
 
 interface SafeZoneDialogProps {
@@ -49,10 +49,12 @@ export function SafeZoneDialog({
     lat: "",
     lng: "",
     level: "1",
+    sido_nm: "",
+    sgg_nm: "",
+    adm_nm: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [canEditLatLng, setCanEditLatLng] = useState(false);
 
   useEffect(() => {
     if (safeZone && mode !== 'create') {
@@ -64,6 +66,9 @@ export function SafeZoneDialog({
         lat: safeZone.lat?.toString() || "",
         lng: safeZone.lng?.toString() || "",
         level: safeZone.level?.toString() || "",
+        sido_nm: safeZone.sido_nm || "",
+        sgg_nm: safeZone.sgg_nm || "",
+        adm_nm: safeZone.adm_nm || "",
       });
     } else if (mode === 'create') {
       setFormData({
@@ -74,6 +79,9 @@ export function SafeZoneDialog({
         lat: initialPosition?.lat.toString() || "",
         lng: initialPosition?.lng.toString() || "",
         level: "1",
+        sido_nm: "",
+        sgg_nm: "",
+        adm_nm: "",
       });
     }
     setErrors({});
@@ -128,6 +136,9 @@ export function SafeZoneDialog({
         lat: parseFloat(formData.lat),
         lng: parseFloat(formData.lng),
         level: formData.level.trim() ? parseInt(formData.level.trim()) : undefined,
+        sido_nm: formData.sido_nm.trim() || undefined,
+        sgg_nm: formData.sgg_nm.trim() || undefined,
+        adm_nm: formData.adm_nm.trim() || undefined,
       };
 
       if (mode === 'edit' && safeZone) {
@@ -135,10 +146,10 @@ export function SafeZoneDialog({
           id: safeZone.id,
           ...safeZoneData,
         };
-        await updateSafeZone(updateData);
+        await updateSafeZoneWithGeocoding(updateData);
       } else if (mode === 'create') {
         const createData: CreateSafeZoneData = safeZoneData as CreateSafeZoneData;
-        await createSafeZone(createData);
+        await createSafeZoneWithGeocoding(createData);
       }
 
       onClose();
@@ -159,14 +170,30 @@ export function SafeZoneDialog({
     }
   };
 
-  const handleAddressSelect = (position: MapPosition, address: string, buildingName?: string) => {
+  const handleAddressSelect = async (position: MapPosition, address: string, buildingName?: string) => {
     setFormData(prev => ({
       ...prev,
-      building_name: buildingName || prev.building_name, // 건물명이 있으면 자동 입력
+      building_name: buildingName || prev.building_name,
       address: address,
       lat: position.lat.toString(),
       lng: position.lng.toString()
     }));
+    
+    // SGIS API로 행정구역 정보 자동 채우기
+    try {
+      const geocodeResult = await geocodeAddressClient(address);
+      if (geocodeResult) {
+        setFormData(prev => ({
+          ...prev,
+          sido_nm: geocodeResult.sido_nm,
+          sgg_nm: geocodeResult.sgg_nm,
+          adm_nm: geocodeResult.adm_nm
+        }));
+      }
+    } catch (error) {
+      console.warn('Failed to fetch administrative info:', error);
+    }
+    
     // 주소 관련 에러 클리어
     setErrors(prev => ({
       ...prev,
@@ -348,6 +375,36 @@ export function SafeZoneDialog({
                     )}
                   </div>
 
+                  {/* 행정구역 정보 */}
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/50 rounded border border-blue-200 dark:border-blue-800">
+                    <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">행정구역 정보</h4>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <span className="text-blue-700 dark:text-blue-300">시도:</span>
+                        <div className="font-medium text-blue-900 dark:text-blue-100">
+                          {mode === 'view' ? (safeZone?.sido_nm || '-') : (formData.sido_nm || '자동입력')}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-blue-700 dark:text-blue-300">시군구:</span>
+                        <div className="font-medium text-blue-900 dark:text-blue-100">
+                          {mode === 'view' ? (safeZone?.sgg_nm || '-') : (formData.sgg_nm || '자동입력')}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-blue-700 dark:text-blue-300">행정동:</span>
+                        <div className="font-medium text-blue-900 dark:text-blue-100">
+                          {mode === 'view' ? (safeZone?.adm_nm || '-') : (formData.adm_nm || '자동입력')}
+                        </div>
+                      </div>
+                    </div>
+                    {mode !== 'view' && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                        주소 검색 시 자동으로 입력됩니다
+                      </p>
+                    )}
+                  </div>
+
                   {/* 좌표 정보 */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
@@ -364,13 +421,13 @@ export function SafeZoneDialog({
                           value={formData.lat}
                           onChange={handleChange("lat")}
                           placeholder="자동으로 입력됩니다..."
-                          className={`${errors.lat ? "border-red-500" : ""} ${!canEditLatLng ? "bg-green-50 dark:bg-green-950/30" : ""} font-mono text-sm dark:text-gray-200`}
+                          className={`${errors.lat ? "border-red-500" : ""} bg-green-50 dark:bg-green-950/30 font-mono text-sm dark:text-gray-200`}
                         />
                       )}
                       {errors.lat && (
                         <p className="text-sm text-red-500">{errors.lat}</p>
                       )}
-                      {mode !== 'view' && !canEditLatLng && (
+                      {mode !== 'view' && (
                         <p className="text-xs text-green-700 dark:text-green-300">자동 설정됨</p>
                       )}
                     </div>
@@ -389,13 +446,13 @@ export function SafeZoneDialog({
                           value={formData.lng}
                           onChange={handleChange("lng")}
                           placeholder="자동으로 입력됩니다..."
-                          className={`${errors.lng ? "border-red-500" : ""} ${!canEditLatLng ? "bg-green-50 dark:bg-green-950/30" : ""} font-mono text-sm dark:text-gray-200`}
+                          className={`${errors.lng ? "border-red-500" : ""} bg-green-50 dark:bg-green-950/30 font-mono text-sm dark:text-gray-200`}
                         />
                       )}
                       {errors.lng && (
                         <p className="text-sm text-red-500">{errors.lng}</p>
                       )}
-                      {mode !== 'view' && !canEditLatLng && (
+                      {mode !== 'view' && (
                         <p className="text-xs text-green-700 dark:text-green-300">자동 설정됨</p>
                       )}
                     </div>

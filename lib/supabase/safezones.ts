@@ -1,5 +1,6 @@
 import { createClient } from "./client";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, SafeZoneStats } from "@/lib/types/safezone";
+import { geocodeAddress } from "@/lib/sgis";
 
 export async function getSafeZones(): Promise<SafeZone[]> {
   const supabase = createClient();
@@ -83,7 +84,7 @@ export async function searchSafeZones(query: string): Promise<SafeZone[]> {
   const { data, error } = await supabase
     .from('safezone')
     .select('*')
-    .or(`building_name.ilike.%${query}%,contact.ilike.%${query}%,address.ilike.%${query}%`)
+    .or(`building_name.ilike.%${query}%,contact.ilike.%${query}%,address.ilike.%${query}%,detail_address.ilike.%${query}%,sido_nm.ilike.%${query}%,sgg_nm.ilike.%${query}%,adm_nm.ilike.%${query}%`)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -165,4 +166,76 @@ export async function getSafeZonesInBounds(
   }
 
   return data || [];
+}
+
+export async function createSafeZoneWithGeocoding(safeZoneData: CreateSafeZoneData): Promise<SafeZone> {
+  const supabase = createClient();
+  
+  // 주소가 있는 경우 SGIS API로 행정구역 정보 보완
+  let enhancedData = { ...safeZoneData };
+  
+  if (safeZoneData.address && !safeZoneData.sido_nm) {
+    try {
+      const geocodeResult = await geocodeAddress(safeZoneData.address);
+      if (geocodeResult) {
+        enhancedData = {
+          ...enhancedData,
+          sido_nm: geocodeResult.sido_nm,
+          sgg_nm: geocodeResult.sgg_nm,
+          adm_nm: geocodeResult.adm_nm,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to geocode address, proceeding without administrative info:', error);
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('safezone')
+    .insert([enhancedData])
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to create safezone: ${error.message}`);
+  }
+
+  return data;
+}
+
+export async function updateSafeZoneWithGeocoding(safeZoneData: UpdateSafeZoneData): Promise<SafeZone> {
+  const supabase = createClient();
+  const { id, ...updateData } = safeZoneData;
+  
+  // 주소가 변경된 경우 SGIS API로 행정구역 정보 업데이트
+  let enhancedData = { ...updateData };
+  
+  if (updateData.address) {
+    try {
+      const geocodeResult = await geocodeAddress(updateData.address);
+      if (geocodeResult) {
+        enhancedData = {
+          ...enhancedData,
+          sido_nm: geocodeResult.sido_nm,
+          sgg_nm: geocodeResult.sgg_nm,
+          adm_nm: geocodeResult.adm_nm,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to geocode address, proceeding with existing data:', error);
+    }
+  }
+  
+  const { data, error } = await supabase
+    .from('safezone')
+    .update(enhancedData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    throw new Error(`Failed to update safezone: ${error.message}`);
+  }
+
+  return data;
 }
