@@ -14,10 +14,9 @@ import {
   Trash2, 
   Building, 
   Phone, 
-  Map,
-  List,
   Shield,
-  Calendar
+  Calendar,
+  X
 } from "lucide-react";
 import { SafeZone, SafeZoneStats, MapPosition } from "@/lib/types/safezone";
 import { 
@@ -115,11 +114,19 @@ export default function SafeZonesPage() {
   };
 
   const handleAdd = () => {
-    setSelectedSafeZone(null);
-    setDialogMode('create');
-    setNewMarkerPosition(null);
-    setAddMode(true);
-    setViewMode('map');
+    if (addMode) {
+      // 추가 모드 나가기
+      setAddMode(false);
+      setNewMarkerPosition(null);
+      setSelectedSafeZone(null);
+    } else {
+      // 추가 모드 진입
+      setSelectedSafeZone(null);
+      setDialogMode('create');
+      setNewMarkerPosition(null);
+      setAddMode(true);
+      setViewMode('map');
+    }
   };
 
   const handleMapClick = (position: MapPosition) => {
@@ -171,7 +178,7 @@ export default function SafeZonesPage() {
               className="pl-10 w-64"
             />
           </div>
-          <div className="flex border rounded-lg">
+          {/* <div className="flex border rounded-lg">
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
@@ -190,10 +197,23 @@ export default function SafeZonesPage() {
               <Map className="mr-2 h-4 w-4" />
               지도
             </Button>
-          </div>
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            세이프 존 추가
+          </div> */}
+          <Button 
+            onClick={handleAdd}
+            variant={addMode ? "destructive" : "default"}
+            className={addMode ? "bg-red-600 hover:bg-red-700" : ""}
+          >
+            {addMode ? (
+              <>
+                <X className="mr-2 h-4 w-4" />
+                세이프존 추가모드 나가기
+              </>
+            ) : (
+              <>
+                <Plus className="mr-2 h-4 w-4" />
+                세이프 존 추가
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -228,9 +248,15 @@ export default function SafeZonesPage() {
           <CardHeader>
             <CardTitle>세이프 존 지도</CardTitle>
             {addMode && (
-              <p className="text-sm text-muted-foreground">
-                지도를 클릭하여 새 세이프 존 위치를 선택하세요.
-              </p>
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  세이프존 추가 모드: 지도를 클릭하여 새 세이프 존 위치를 선택하세요.
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                  우측 상단의 "세이프존 추가모드 나가기" 버튼을 클릭하여 모드를 종료할 수 있습니다.
+                </p>
+              </div>
             )}
           </CardHeader>
           <CardContent>

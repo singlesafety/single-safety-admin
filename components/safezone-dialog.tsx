@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { SafeZone, CreateSafeZoneData, UpdateSafeZoneData, MapPosition } from "@/lib/types/safezone";
 import { createSafeZone, updateSafeZone } from "@/lib/supabase/safezones";
+import { AddressSearch } from "@/components/address-search";
 
 interface SafeZoneDialogProps {
   open: boolean;
@@ -147,6 +148,22 @@ export function SafeZoneDialog({
     }
   };
 
+  const handleAddressSelect = (position: MapPosition, address: string) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address,
+      lat: position.lat.toString(),
+      lng: position.lng.toString()
+    }));
+    // 주소 관련 에러 클리어
+    setErrors(prev => ({
+      ...prev,
+      address: "",
+      lat: "",
+      lng: ""
+    }));
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR', {
       year: 'numeric',
@@ -231,12 +248,18 @@ export function SafeZoneDialog({
                   {safeZone?.address || '주소 없음'}
                 </div>
               ) : (
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={handleChange("address")}
-                  placeholder="주소를 입력하세요 (선택사항)"
-                />
+                <div className="space-y-2">
+                  <AddressSearch
+                    onLocationSelect={handleAddressSelect}
+                    placeholder="주소를 검색하세요..."
+                  />
+                  <Input
+                    id="address"
+                    value={formData.address}
+                    onChange={handleChange("address")}
+                    placeholder="또는 직접 입력하세요 (선택사항)"
+                  />
+                </div>
               )}
             </div>
 

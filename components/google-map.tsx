@@ -45,7 +45,7 @@ export function GoogleMap({
         const loader = new Loader({
           apiKey,
           version: "weekly",
-          libraries: ["maps", "marker"]
+          libraries: ["maps", "marker", "places"]
         });
 
         await loader.load();
