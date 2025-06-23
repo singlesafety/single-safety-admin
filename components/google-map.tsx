@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Loader } from "@googlemaps/js-api-loader";
 import { SafeZone, MapPosition } from "@/lib/types/safezone";
 import { Plus, Loader2 } from "lucide-react";
+import { createMarkerIcon, LEVEL_INFO } from "@/components/marker-icons";
 
 interface GoogleMapProps {
   safeZones: SafeZone[];
@@ -107,14 +108,11 @@ export function GoogleMap({
       position: { lat: safeZone.lat, lng: safeZone.lng },
       map,
       title: safeZone.building_name || '세이프 존',
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: isSelected ? 12 : 8,
-        fillColor: isSelected ? '#dc2626' : '#059669',
-        fillOpacity: 1,
-        strokeColor: '#ffffff',
-        strokeWeight: 2,
-      },
+      icon: createMarkerIcon({
+        level: safeZone.level || 1,
+        isSelected,
+        size: 32
+      }),
       zIndex: isSelected ? 1000 : 1
     });
 
@@ -136,7 +134,7 @@ export function GoogleMap({
           </h3>
           ${safeZone.address ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">📍 ${safeZone.address}</p>` : ''}
           ${safeZone.contact ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">📞 ${safeZone.contact}</p>` : ''}
-          ${safeZone.level ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">⭐ 레벨: ${safeZone.level}</p>` : ''}
+          ${safeZone.level ? `<p style="margin: 4px 0; color: #666; font-size: 14px;">🛡️ 레벨: ${safeZone.level} (${LEVEL_INFO[safeZone.level as keyof typeof LEVEL_INFO]?.name || '알 수 없음'})</p>` : ''}
           <p style="margin: 4px 0; color: #999; font-size: 12px;">
             좌표: ${safeZone.lat.toFixed(6)}, ${safeZone.lng.toFixed(6)}
           </p>
@@ -221,6 +219,24 @@ export function GoogleMap({
       {/* 지도 정보 */}
       <div className="absolute bottom-4 right-4 bg-white rounded-lg shadow-md px-3 py-2 text-sm text-gray-600 z-10">
         세이프 존: {safeZones.filter(sz => sz.lat && sz.lng).length}개
+      </div>
+
+      {/* 레벨 범례 */}
+      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-md px-3 py-2 text-sm z-10">
+        <div className="font-semibold text-gray-700 mb-2">안전 레벨</div>
+        <div className="space-y-1">
+          {Object.entries(LEVEL_INFO).map(([level, info]) => (
+            <div key={level} className="flex items-center gap-2">
+              <div 
+                className="w-4 h-4 rounded-sm border border-gray-300"
+                style={{ backgroundColor: info.color }}
+              />
+              <span className="text-xs text-gray-600">
+                레벨 {level}: {info.name}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Google Maps 컨테이너 */}

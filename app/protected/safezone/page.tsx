@@ -29,6 +29,7 @@ import {
 } from "@/lib/supabase/safezones";
 import { GoogleMap } from "@/components/google-map";
 import { SafeZoneDialog } from "@/components/safezone-dialog";
+import { LEVEL_INFO } from "@/components/marker-icons";
 
 export default function SafeZonesPage() {
   const [safeZones, setSafeZones] = useState<SafeZone[]>([]);
@@ -44,7 +45,6 @@ export default function SafeZonesPage() {
   const [selectedSafeZone, setSelectedSafeZone] = useState<SafeZone | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit' | 'create'>('view');
-  const [addMode, setAddMode] = useState(false);
   const [newMarkerPosition, setNewMarkerPosition] = useState<MapPosition | null>(null);
 
   useEffect(() => {
@@ -116,34 +116,15 @@ export default function SafeZonesPage() {
   };
 
   const handleAdd = () => {
-    if (addMode) {
-      // 추가 모드 나가기
-      setAddMode(false);
-      setNewMarkerPosition(null);
-      setSelectedSafeZone(null);
-    } else {
-      // 추가 모드 시작
-      setAddMode(true);
-      
-      // 초기화
-      setSelectedSafeZone(null);
-      setNewMarkerPosition(null);
-
-      if (viewMode === 'list') {
-        setDialogMode('create');
-        setIsDialogOpen(true);
-      }
-    }
+    setSelectedSafeZone(null);
+    setNewMarkerPosition(null);
+    setDialogMode('create');
+    setIsDialogOpen(true);
   };
 
   const handleMapClick = (position: MapPosition) => {
     console.log("Map clicked at position:", position);
-    
-    if (addMode) {
-      setNewMarkerPosition(position);
-      setDialogMode('create');
-      setIsDialogOpen(true);
-    }
+    setSelectedSafeZone(null);
   };
 
   const handleMarkerClick = (safeZone: SafeZone) => {
@@ -154,7 +135,7 @@ export default function SafeZonesPage() {
     setIsDialogOpen(false);
     setSelectedSafeZone(null);
     setNewMarkerPosition(null);
-    setAddMode(false);
+
     loadSafeZones();
     loadStats();
   };
@@ -208,20 +189,9 @@ export default function SafeZonesPage() {
           </div>
           <Button 
             onClick={handleAdd}
-            variant={addMode ? "destructive" : "default"}
-            className={addMode ? "bg-red-600 hover:bg-red-700" : ""}
           >
-            {addMode ? (
-              <>
-                <X className="mr-2 h-4 w-4" />
-                세이프존 추가모드 나가기
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" />
-                세이프 존 추가
-              </>
-            )}
+            <Plus className="mr-2 h-4 w-4" />
+            세이프 존 추가
           </Button>
         </div>
       </div>
@@ -255,17 +225,6 @@ export default function SafeZonesPage() {
         <Card>
           <CardHeader>
             <CardTitle>세이프 존 지도</CardTitle>
-            {addMode && (
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  세이프존 추가 모드: 지도를 클릭하여 새 세이프 존 위치를 선택하세요.
-                </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                  우측 상단의 "세이프존 추가모드 나가기" 버튼을 클릭하여 모드를 종료할 수 있습니다.
-                </p>
-              </div>
-            )}
           </CardHeader>
           <CardContent>
             <GoogleMap
@@ -273,7 +232,6 @@ export default function SafeZonesPage() {
               onMarkerClick={handleMarkerClick}
               onMapClick={handleMapClick}
               selectedSafeZone={selectedSafeZone}
-              showAddMode={addMode}
             />
           </CardContent>
         </Card>
@@ -332,8 +290,12 @@ export default function SafeZonesPage() {
                               </div>
                             )}
                             {safeZone.level && (
-                              <div className="text-xs">
-                                레벨: {safeZone.level}
+                              <div className="flex items-center gap-1 text-xs">
+                                <div 
+                                  className="w-3 h-3 rounded-sm border border-gray-300"
+                                  style={{ backgroundColor: LEVEL_INFO[safeZone.level as keyof typeof LEVEL_INFO]?.color || '#6B7280' }}
+                                />
+                                레벨: {safeZone.level} ({LEVEL_INFO[safeZone.level as keyof typeof LEVEL_INFO]?.name || '알 수 없음'})
                               </div>
                             )}
                             <div className="text-xs">

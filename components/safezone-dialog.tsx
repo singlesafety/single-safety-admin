@@ -45,6 +45,7 @@ export function SafeZoneDialog({
     building_name: "",
     contact: "",
     address: "",
+    detail_address: "",
     lat: "",
     lng: "",
     level: "1",
@@ -59,6 +60,7 @@ export function SafeZoneDialog({
         building_name: safeZone.building_name || "",
         contact: safeZone.contact || "",
         address: safeZone.address || "",
+        detail_address: safeZone.detail_address || "",
         lat: safeZone.lat?.toString() || "",
         lng: safeZone.lng?.toString() || "",
         level: safeZone.level?.toString() || "",
@@ -68,9 +70,10 @@ export function SafeZoneDialog({
         building_name: "",
         contact: "",
         address: "",
+        detail_address: "",
         lat: initialPosition?.lat.toString() || "",
         lng: initialPosition?.lng.toString() || "",
-        level: "",
+        level: "1",
       });
     }
     setErrors({});
@@ -91,6 +94,11 @@ export function SafeZoneDialog({
     const lng = parseFloat(formData.lng);
     if (!formData.lng.trim() || isNaN(lng) || lng < -180 || lng > 180) {
       newErrors.lng = "올바른 경도를 입력해주세요 (-180 ~ 180).";
+    }
+
+    const level = parseInt(formData.level);
+    if (!formData.level.trim() || isNaN(level) || level < 1 || level > 3) {
+      newErrors.level = "레벨을 입력해주세요 (1 ~ 3).";
     }
 
     setErrors(newErrors);
@@ -116,6 +124,7 @@ export function SafeZoneDialog({
         building_name: formData.building_name.trim(),
         contact: formData.contact.trim() || undefined,
         address: formData.address.trim() || undefined,
+        detail_address: formData.detail_address.trim() || undefined,
         lat: parseFloat(formData.lat),
         lng: parseFloat(formData.lng),
         level: formData.level.trim() ? parseInt(formData.level.trim()) : undefined,
@@ -181,7 +190,7 @@ export function SafeZoneDialog({
     switch (mode) {
       case 'view': return '세이프 존 상세보기';
       case 'edit': return '세이프 존 수정';
-      case 'create': return '새 세이프 존 등록';
+      case 'create': return '세이프 존 등록';
       default: return '세이프 존';
     }
   };
@@ -197,196 +206,222 @@ export function SafeZoneDialog({
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] lg:max-w-[700px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{getTitle()}</DialogTitle>
           <DialogDescription>{getDescription()}</DialogDescription>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* 주소 검색 (최상단) */}
+        <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+          {/* 주소 검색 (전체 너비) */}
           {mode !== 'view' && (
-            <div className="space-y-2">
-              <Label htmlFor="address-search">주소 검색</Label>
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-2 mb-3">
+                <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Label htmlFor="address-search" className="text-base font-semibold text-blue-900 dark:text-blue-100">주소 검색</Label>
+              </div>
               <AddressSearch
                 onLocationSelect={handleAddressSelect}
                 placeholder="주소를 검색하여 건물명과 위치를 자동으로 입력하세요..."
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
                 주소를 검색하면 건물명과 좌표가 자동으로 입력됩니다
               </p>
             </div>
           )}
 
-          {/* 기본 정보 */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="building_name">건물명 *</Label>
-              {mode === 'view' ? (
-                <div className="p-2 bg-muted rounded flex items-center gap-2">
-                  <Building className="h-3 w-3" />
-                  {safeZone?.building_name || '정보 없음'}
+          {/* 메인 콘텐츠 - 2열 레이아웃 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 좌측 열: 기본 정보 */}
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-4">
+                  <Building className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">기본 정보</h3>
                 </div>
-              ) : (
-                <Input
-                  id="building_name"
-                  value={formData.building_name}
-                  onChange={handleChange("building_name")}
-                  placeholder="건물명을 입력하세요"
-                  className={errors.building_name ? "border-red-500" : ""}
-                />
-              )}
-              {errors.building_name && (
-                <p className="text-sm text-red-500">{errors.building_name}</p>
-              )}
-            </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="building_name">건물명</Label>
+                    {mode === 'view' ? (
+                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                        <Building className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <span className="dark:text-gray-200">{safeZone?.building_name || '정보 없음'}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="building_name"
+                        value={formData.building_name}
+                        onChange={handleChange("building_name")}
+                        placeholder="건물명을 입력하세요"
+                        className={errors.building_name ? "border-red-500" : ""}
+                      />
+                    )}
+                    {errors.building_name && (
+                      <p className="text-sm text-red-500">{errors.building_name}</p>
+                    )}
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="contact">연락처</Label>
-              {mode === 'view' ? (
-                <div className="p-2 bg-muted rounded flex items-center gap-2">
-                  <Phone className="h-3 w-3" />
-                  {safeZone?.contact || '연락처 없음'}
-                </div>
-              ) : (
-                <Input
-                  id="contact"
-                  value={formData.contact}
-                  onChange={handleChange("contact")}
-                  placeholder="연락처를 입력하세요 (선택사항)"
-                />
-              )}
-            </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contact">연락처</Label>
+                    {mode === 'view' ? (
+                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <span className="dark:text-gray-200">{safeZone?.contact || '연락처 없음'}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="contact"
+                        value={formData.contact}
+                        onChange={handleChange("contact")}
+                        placeholder="연락처를 입력하세요..."
+                      />
+                    )}
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">주소</Label>
-              {mode === 'view' ? (
-                <div className="p-2 bg-muted rounded flex items-center gap-2">
-                  <MapPin className="h-3 w-3" />
-                  {safeZone?.address || '주소 없음'}
-                </div>
-              ) : (
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={handleChange("address")}
-                  placeholder="주소가 자동으로 입력됩니다 (또는 직접 입력)"
-                  className="bg-muted/50"
-                />
-              )}
-            </div>
-
-            {/* 좌표 수정 설정 */}
-            {mode !== 'view' && (
-              <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <Label htmlFor="can-edit-latlng" className="text-sm font-medium">위도/경도 직접 수정</Label>
-                    <p className="text-xs text-muted-foreground">주소 검색 대신 위도/경도를 직접 입력할 수 있습니다</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="level">레벨</Label>
+                    {mode === 'view' ? (
+                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                        <span className="text-sm font-medium dark:text-gray-200">Level {safeZone?.level || '정보 없음'}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="level"
+                        type="number"
+                        min="1"
+                        max="3"
+                        value={formData.level}
+                        onChange={handleChange("level")}
+                        placeholder="레벨을 입력하세요 (1-3)"
+                        className={errors.level ? "border-red-500" : ""}
+                      />
+                    )}
+                    {errors.level && (
+                      <p className="text-sm text-red-500">{errors.level}</p>
+                    )}
                   </div>
                 </div>
-                <input
-                  id="can-edit-latlng"
-                  type="checkbox"
-                  checked={canEditLatLng}
-                  onChange={(e) => setCanEditLatLng(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-              </div>
-            )}
-
-            {/* 좌표 정보 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="lat">위도 *</Label>
-                {mode === 'view' ? (
-                  <div className="p-2 bg-muted rounded text-sm">
-                    {safeZone?.lat?.toFixed(6) || '정보 없음'}
-                  </div>
-                ) : (
-                  <Input
-                    id="lat"
-                    type="number"
-                    step="any"
-                    value={formData.lat}
-                    onChange={handleChange("lat")}
-                    placeholder="위도"
-                    disabled={!canEditLatLng}
-                    className={`${errors.lat ? "border-red-500" : ""} ${!canEditLatLng ? "bg-muted" : ""}`}
-                  />
-                )}
-                {errors.lat && (
-                  <p className="text-sm text-red-500">{errors.lat}</p>
-                )}
-                {mode !== 'view' && !canEditLatLng && (
-                  <p className="text-xs text-muted-foreground">주소 검색을 통해 자동으로 설정됩니다</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lng">경도 *</Label>
-                {mode === 'view' ? (
-                  <div className="p-2 bg-muted rounded text-sm">
-                    {safeZone?.lng?.toFixed(6) || '정보 없음'}
-                  </div>
-                ) : (
-                  <Input
-                    id="lng"
-                    type="number"
-                    step="any"
-                    value={formData.lng}
-                    onChange={handleChange("lng")}
-                    placeholder="경도"
-                    disabled={!canEditLatLng}
-                    className={`${errors.lng ? "border-red-500" : ""} ${!canEditLatLng ? "bg-muted" : ""}`}
-                  />
-                )}
-                {errors.lng && (
-                  <p className="text-sm text-red-500">{errors.lng}</p>
-                )}
-                {mode !== 'view' && !canEditLatLng && (
-                  <p className="text-xs text-muted-foreground">주소 검색을 통해 자동으로 설정됩니다</p>
-                )}
               </div>
             </div>
 
-            {/* 레벨 정보 */}
-            <div className="space-y-2">
-              <Label htmlFor="level">레벨 *</Label>
-              {mode === 'view' ? (
-                <div className="p-2 bg-muted rounded text-sm">
-                  {safeZone?.level || '레벨 정보 없음'}
+            {/* 우측 열: 위치 정보 */}
+            <div className="space-y-4">
+              <div className="p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <h3 className="text-base font-semibold text-green-900 dark:text-green-100">위치 정보</h3>
                 </div>
-              ) : (
-                <Input
-                  id="level"
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={formData.level}
-                  onChange={handleChange("level")}
-                  placeholder="레벨을 입력하세요 (선택사항)"
-                />
-              )}
-            </div>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">기본 주소</Label>
+                    {mode === 'view' ? (
+                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm dark:text-gray-200">{safeZone?.address || '주소 없음'}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="address"
+                        value={formData.address}
+                        onChange={handleChange("address")}
+                        placeholder="주소가 자동으로 입력됩니다"
+                        className="bg-green-50 dark:bg-green-950/30 dark:text-green-100"
+                      />
+                    )}
+                  </div>
 
-            {/* 등록일 (보기 모드일 때만) */}
-            {mode === 'view' && safeZone && (
-              <div className="space-y-2">
-                <Label>등록일</Label>
-                <div className="p-2 bg-muted rounded flex items-center gap-2">
-                  <Calendar className="h-3 w-3" />
-                  {formatDate(safeZone.created_at)}
+                  <div className="space-y-2">
+                    <Label htmlFor="detail_address">상세주소</Label>
+                    {mode === 'view' ? (
+                      <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                        <span className="text-sm dark:text-gray-200">{safeZone?.detail_address || '상세주소 없음'}</span>
+                      </div>
+                    ) : (
+                      <Input
+                        id="detail_address"
+                        value={formData.detail_address}
+                        onChange={handleChange("detail_address")}
+                        placeholder="동, 호수, 층수 등"
+                      />
+                    )}
+                  </div>
+
+                  {/* 좌표 정보 */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="lat">위도</Label>
+                      {mode === 'view' ? (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 text-sm font-mono dark:text-gray-200">
+                          {safeZone?.lat?.toFixed(6) || '정보 없음'}
+                        </div>
+                      ) : (
+                        <Input
+                          id="lat"
+                          type="number"
+                          step="any"
+                          value={formData.lat}
+                          onChange={handleChange("lat")}
+                          placeholder="자동으로 입력됩니다..."
+                          className={`${errors.lat ? "border-red-500" : ""} ${!canEditLatLng ? "bg-green-50 dark:bg-green-950/30" : ""} font-mono text-sm dark:text-gray-200`}
+                        />
+                      )}
+                      {errors.lat && (
+                        <p className="text-sm text-red-500">{errors.lat}</p>
+                      )}
+                      {mode !== 'view' && !canEditLatLng && (
+                        <p className="text-xs text-green-700 dark:text-green-300">자동 설정됨</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="lng">경도</Label>
+                      {mode === 'view' ? (
+                        <div className="p-3 bg-white dark:bg-gray-800 rounded border dark:border-gray-600 text-sm font-mono dark:text-gray-200">
+                          {safeZone?.lng?.toFixed(6) || '정보 없음'}
+                        </div>
+                      ) : (
+                        <Input
+                          id="lng"
+                          type="number"
+                          step="any"
+                          value={formData.lng}
+                          onChange={handleChange("lng")}
+                          placeholder="자동으로 입력됩니다..."
+                          className={`${errors.lng ? "border-red-500" : ""} ${!canEditLatLng ? "bg-green-50 dark:bg-green-950/30" : ""} font-mono text-sm dark:text-gray-200`}
+                        />
+                      )}
+                      {errors.lng && (
+                        <p className="text-sm text-red-500">{errors.lng}</p>
+                      )}
+                      {mode !== 'view' && !canEditLatLng && (
+                        <p className="text-xs text-green-700 dark:text-green-300">자동 설정됨</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
+          {/* 등록일 (보기 모드일 때만) */}
+          {mode === 'view' && safeZone && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/50 rounded-lg border border-amber-200 dark:border-amber-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                <h3 className="text-base font-semibold text-amber-900 dark:text-amber-100">등록 정보</h3>
+              </div>
+              <div className="text-sm text-amber-800 dark:text-amber-200">
+                등록일: {formatDate(safeZone.created_at)}
+              </div>
+            </div>
+          )}
+
           {errors.general && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <p className="text-sm text-red-700">{errors.general}</p>
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+              <p className="text-sm text-red-700 dark:text-red-300">{errors.general}</p>
             </div>
           )}
 

@@ -4,6 +4,7 @@ export interface SafeZone {
   building_name: string | null;
   contact: string | null;
   address: string | null;
+  detail_address: string | null;
   lat: number | null;
   lng: number | null;
   level: number | null;
@@ -13,6 +14,7 @@ export interface CreateSafeZoneData {
   building_name: string;
   contact?: string;
   address?: string;
+  detail_address?: string;
   lat: number;
   lng: number;
   level?: number;
