@@ -9,7 +9,7 @@ export interface Product {
 export interface CreateProductData {
   name: string;
   price: number;
-  price_description?: string;
+  price_description: string | null;
   image_path: string;
 }
 

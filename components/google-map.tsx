@@ -175,8 +175,8 @@ export function GoogleMap({
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
+    const markers = markersRef.current;
     return () => {
-      const markers = markersRef.current;
       markers.forEach(marker => marker.setMap(null));
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
