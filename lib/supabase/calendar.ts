@@ -76,10 +76,7 @@ export async function upsertCalendarEntry(date: string, status: 'claimed' | 'unc
   
   const { data, error } = await supabase
     .from('calender')
-    .upsert(
-      { date, status },
-      { onConflict: 'date' }
-    )
+    .upsert({ date: date, status: status }, { onConflict: 'date' })
     .select()
     .single();
 

@@ -5,7 +5,7 @@ import { Calendar } from "@/lib/types/calendar";
 import { getCalendarByDateRange, upsertCalendarEntry } from "@/lib/supabase/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarIcon, Loader2, Check, X } from "lucide-react";
+import { CalendarIcon, Loader2, Check } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from "date-fns";
 import { ko } from "date-fns/locale";
 
@@ -164,23 +164,16 @@ export default function CalendarStatusManager() {
                     className={`
                       p-2 border rounded-lg cursor-pointer transition-all
                       ${isSelected ? 'ring-2 ring-primary' : ''}
-                      ${isTodayDate ? 'bg-blue-50 border-blue-300' : ''}
-                      ${status === 'claimed' ? 'bg-green-50 border-green-300' : ''}
-                      ${status === 'unclaimed' ? 'bg-red-50 border-red-300' : ''}
-                      hover:shadow-md
+                      ${isTodayDate ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700' : 'border-gray-200 dark:border-gray-700'}
+                      ${status === 'claimed' ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700' : ''}
+                      hover:shadow-md dark:hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-600
                     `}
                     onClick={() => setSelectedDate(date)}
                   >
-                    <div className="text-center">
+                    <div className="flex items-center justify-center gap-1">
                       <div className="text-sm font-medium">{format(date, 'd')}</div>
-                      {status && (
-                        <div className="mt-1">
-                          {status === 'claimed' ? (
-                            <Check className="h-3 w-3 text-green-600 mx-auto" />
-                          ) : (
-                            <X className="h-3 w-3 text-red-600 mx-auto" />
-                          )}
-                        </div>
+                      {(status && status == 'claimed') && (
+                        <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
                       )}
                     </div>
                   </div>
@@ -192,7 +185,7 @@ export default function CalendarStatusManager() {
 
         {/* Selected Date Actions */}
         {selectedDate && (
-          <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+          <div className="mt-6 p-4 border rounded-lg bg-muted/50 dark:bg-muted/20">
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="font-medium">선택된 날짜</h4>
@@ -208,7 +201,7 @@ export default function CalendarStatusManager() {
                   disabled={saving}
                 >
                   {saving && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                  Claimed
+                  예약 됨
                 </Button>
                 <Button
                   size="sm"
@@ -217,7 +210,7 @@ export default function CalendarStatusManager() {
                   disabled={saving}
                 >
                   {saving && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                  Unclaimed
+                  예약 안됨
                 </Button>
               </div>
             </div>
@@ -227,15 +220,11 @@ export default function CalendarStatusManager() {
         {/* Legend */}
         <div className="flex gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-50 border border-green-300 rounded" />
-            <span>Claimed</span>
+            <div className="w-4 h-4 bg-green-50 dark:bg-green-950 border border-green-300 dark:border-green-700 rounded" />
+            <span>예약 됨</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-50 border border-red-300 rounded" />
-            <span>Unclaimed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-50 border border-blue-300 rounded" />
+            <div className="w-4 h-4 bg-blue-50 dark:bg-blue-950 border border-blue-300 dark:border-blue-700 rounded" />
             <span>오늘</span>
           </div>
         </div>
