@@ -9,6 +9,7 @@ export interface Application {
   installation_date: string;
   created_at: string;
   applicant_type: string | null;
+  status: string | null;
 }
 
 export interface ApplicationProduct {

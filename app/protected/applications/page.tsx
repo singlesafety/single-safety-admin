@@ -19,10 +19,11 @@ import {
   ChevronUp,
   Filter,
   X,
-  CalendarDays
+  CalendarDays,
+  PhoneCall
 } from "lucide-react";
 import { ApplicationWithProducts, ApplicationStats } from "@/lib/types/application";
-import { getApplications, deleteApplication, getApplicationStats } from "@/lib/supabase/applications";
+import { getApplications, deleteApplication, getApplicationStats, updateApplicationStatus } from "@/lib/supabase/applications";
 
 export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationWithProducts[]>([]);
@@ -175,6 +176,26 @@ export default function ApplicationsPage() {
       } catch (error) {
         console.error('Failed to delete application:', error);
       }
+    }
+  };
+
+  const handleCallStatusChange = async (applicationId: number, status: string) => {
+    try {
+      await updateApplicationStatus(applicationId, status);
+      // Update the local state to reflect the change immediately
+      setApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId ? { ...app, status } : app
+        )
+      );
+      setAllApplications(prevApplications => 
+        prevApplications.map(app => 
+          app.id === applicationId ? { ...app, status } : app
+        )
+      );
+    } catch (error) {
+      console.error('Failed to update call status:', error);
+      // Optionally show an error message to the user
     }
   };
 
@@ -415,7 +436,7 @@ export default function ApplicationsPage() {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center justify-between w-full">
                             <div>
                               <h3 className="font-semibold text-lg flex items-center gap-2">
                                 <Building className="h-4 w-4" />
@@ -429,6 +450,32 @@ export default function ApplicationsPage() {
                                 <Badge variant="outline">
                                   {getApplicantTypeLabel(application.applicant_type)}
                                 </Badge>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 px-4 py-2 border rounded-lg bg-muted/50">
+                              <PhoneCall className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium mr-2">통화 여부:</span>
+                              <div className="flex items-center gap-3">
+                                <label className="flex items-center gap-1 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name={`call-status-${application.id}`}
+                                    checked={application.status === 'contacted'}
+                                    onChange={() => handleCallStatusChange(application.id, 'contacted')}
+                                    className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                  />
+                                  <span className="text-sm font-medium text-green-600">YES</span>
+                                </label>
+                                <label className="flex items-center gap-1 cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name={`call-status-${application.id}`}
+                                    checked={application.status === 'not_contacted' || !application.status}
+                                    onChange={() => handleCallStatusChange(application.id, 'not_contacted')}
+                                    className="w-4 h-4 text-red-600 focus:ring-red-500"
+                                  />
+                                  <span className="text-sm font-medium text-red-600">NO</span>
+                                </label>
                               </div>
                             </div>
                           </div>

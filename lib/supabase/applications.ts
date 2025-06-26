@@ -282,6 +282,19 @@ export async function searchApplications(query: string): Promise<ApplicationWith
   return applicationsWithTotals;
 }
 
+export async function updateApplicationStatus(id: number, status: string): Promise<void> {
+  const supabase = createClient();
+  
+  const { error } = await supabase
+    .from('application')
+    .update({ status })
+    .eq('id', id);
+
+  if (error) {
+    throw new Error(`Failed to update application status: ${error.message}`);
+  }
+}
+
 export async function getApplicationStats(): Promise<ApplicationStats> {
   const supabase = createClient();
   
