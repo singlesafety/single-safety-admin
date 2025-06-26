@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save, Shield, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import CalendarStatusManager from "@/components/calendar-status-manager";
 import { SETTING_KEYS } from "@/lib/types/settings";
 import { 
   updateBooleanSetting, 
@@ -162,6 +163,8 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <CalendarStatusManager />
 
         <div className="flex justify-end gap-2">
           <Button 
